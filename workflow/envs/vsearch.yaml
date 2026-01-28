@@ -1,0 +1,7 @@
+name: vsearch
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - vsearch=2.30.4

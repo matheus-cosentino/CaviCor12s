@@ -1,0 +1,7 @@
+name: basta
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults  
+dependencies:
+  - basta=1.4

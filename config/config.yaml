@@ -1,0 +1,49 @@
+###########################################################################
+#                               Config file                               #
+#                         MSc. Matheus Cosentino                          #
+###########################################################################
+#   ______     ___   ____    ____  __    ______   ______   .______        #
+#  /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
+# |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
+# |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
+# |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
+#  \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
+#                                                                         #
+###########################################################################
+
+### Main output directory
+output_dir: "results"
+
+### Add path to directory of files of interest
+data_dir: "data"
+
+### Envs with conda yaml paths to be installed
+envs:
+  cavicor: "envs/cavicor.yaml"
+  chopper: "envs/chopper.yaml"
+  vsearch: "envs/vsearch.yaml"
+  minimap2: "envs/minimap2.yaml"
+  samtools: "envs/samtools.yaml"
+  blast: "envs/blast.yaml"
+  basta: "envs/basta.yaml"
+  r_rarefaction: "envs/r_rarefaction.yaml"
+
+### resources
+#diamond db to download
+diamond:
+  - "resources/blast/" 
+#basta db taxonomy
+basta:
+  - "resources/basta/"
+#logos
+logo_dirs: 
+  - "resources/logo/"
+
+### params per tool
+basta:
+  classification:
+    #values between 51 and 99 BASTA returns the taxonomy that is shared by at least the given percentage of hits. 
+    #- 51    #percentage of best hits 51 (minimum)
+    #- 75
+    - 97    
+    #- 100   #BASTA reads 3 best hits for each query sequence and returns the LCA of all sequences

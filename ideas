@@ -1,0 +1,56 @@
+### processes
+cleaning with https://github.com/wdecoster/chopper
+
+##### criacao de clusters
+# 1. Clusterização (ajuste o --id conforme a variabilidade do 12S)
+vsearch --cluster_fast reads_filtradas.fastq \
+  --id 0.90 \
+  --centroids centroids.fasta \
+  --consout consenso_bruto.fasta \
+  --sizeout
+
+# Nota: O 'consout' do vsearch é um consenso simples. 
+# Para maior precisão, alinhe as reads de cada cluster separadamente.
+
+
+# Indexar os consensos (opcional, mas rápido)
+minimap2 -d consenso.mmi consenso_especies.fasta
+
+# Mapear
+minimap2 -ax map-ont --secondary=no consenso.mmi reads_originais_filtradas.fastq > mapeamento.sam
+
+
+# Converter SAM para BAM, ordenar e indexar
+samtools view -bS mapeamento.sam | samtools sort -o mapeamento_sorted.bam
+samtools index mapeamento_sorted.bam
+
+# Gerar tabela de contagem
+samtools idxstats mapeamento_sorted.bam > abundancia_bruta.txt
+
+#### ou
+
+vsearch --usearch_global reads_originais_filtradas.fastq \
+  --db consenso_especies.fasta \
+  --id 0.90 \
+  --otutabout tabela_abundancia.txt
+
+
+  #### basta
+  blastn \
+  -query consensos_clusters.fasta \
+  -db /caminho/para/banco/nt \
+  -out blast_output.txt \
+  -evalue 1e-5 \
+  -perc_identity 85 \
+  -max_target_seqs 10 \
+  -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids"
+
+
+
+  basta sequence \
+  blast_output.txt \
+  basta_output.txt \
+  prot \
+  --best_hit 1 \
+  --percentage 97 \
+  --lca_depth 100
