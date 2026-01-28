@@ -15,3 +15,47 @@
 # --- 1. Load Configuration --- #
 #################################
 configfile: "config/config.yaml"
+
+##############################################
+# --- 2. Define Conda Environment Paths --- #
+#############################################  
+CAVICOR = workflow.source_path(config["envs"]["cavicor"])
+CHOPPER = workflow.source_path(config["envs"]["chopper"])
+VSEARCH = workflow.source_path(config["envs"]["vsearch"])
+MINIMAP2 = workflow.source_path(config["envs"]["minimap2"])
+SAMTOOLS = workflow.source_path(config["envs"]["samtools"])
+BLAST = workflow.source_path(config["envs"]["blast"])
+BASTA = workflow.source_path(config["envs"]["basta"])
+R_RAREFACTION = workflow.source_path(config["envs"]["r_rarefaction"])
+
+###########################################
+# --- 3. Import functions to be used --- #
+##########################################
+
+############################################
+# --- 4. Export functions to be used.  --- #
+###########################################
+
+###########################################################
+# --- 5. Define workflown directory and local infos  --- #
+##########################################################
+DATA = config["data_dir"]
+OUT_DIR = config["output_dir"]
+
+#######################################
+# --- 6. Load the Workflow Rules --- #
+######################################
+include: "rules/blast.smk"
+
+
+######################################
+# --- 7. Obtain the final target --- #
+######################################
+
+rule all:
+  input:
+    get_final_outputs() 
+  onsuccess:
+    print("Workflow finished successfully!")
+  onerror:
+    print("Workflow failed. Temporary files were NOT removed to aid debugging.")

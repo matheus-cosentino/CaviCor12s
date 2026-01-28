@@ -28,6 +28,10 @@ envs:
   basta: "envs/basta.yaml"
   r_rarefaction: "envs/r_rarefaction.yaml"
 
+### Modules of requested analysis
+  12s_diversity: true #blast and basta diversity of samples
+  rarefaction: true #rarefaction curve of data
+
 ### resources
 #diamond db to download
 diamond:
@@ -39,11 +43,38 @@ basta:
 logo_dirs: 
   - "resources/logo/"
 
-### params per tool
+
+
+########### params
+blast:
+  perc_identity: 
+    - 70
+    - 80
+    - 90
+    - 95 
+    - 99
+  evalue:
+#    - 0.01    
+    - 0.001
+#    - 0.00001
+#    - 0.000001
+#    - 0.0000001
+#    - 0.00000001
+  max_target_seqs:
+#    - 1
+#    - 5
+    - 10
+#    - 15
+#    - 20
+#    - 30
+#    - 50
+ 
 basta:
-  classification:
+  lca_depth:
     #values between 51 and 99 BASTA returns the taxonomy that is shared by at least the given percentage of hits. 
     #- 51    #percentage of best hits 51 (minimum)
     #- 75
     - 97    
     #- 100   #BASTA reads 3 best hits for each query sequence and returns the LCA of all sequences
+  best_hit: 1
+  percentage: 97

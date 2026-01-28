@@ -95,49 +95,6 @@ rule basta_rarefaction_plot:
     script:
         "../scripts/plot_rarefaction_basta.R"
 
-
-
-
-
-rule blast_mito:
-    input:
-        query="results/seus_clusters_consenso.fasta", 
-        db_dir="resources/blast_db/mito"
-    output:
-        "results/blast_mito.txt"
-    threads: 8
-    shell:
-        """
-        # O caminho do DB é o prefixo dentro da pasta (geralmente 'mito.1.rn' etc, o blast acha pelo nome base 'mito')
-        # Precisamos apontar para o arquivo base correto dentro da pasta
-        DB_PATH="{input.db_dir}/mito"
-        
-        blastn \
-            -query {input.query} \
-            -db $DB_PATH \
-            -num_threads {threads} \
-            -evalue 1e-5 \
-            -max_target_seqs 10 \
-            -perc_identity 80 \
-            -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids" \
-            > {output}
-        """
-
-
-### get blast database
-rule get_mito_db:
-    output:
-        directory("resources/blast_db/mito")
-    shell:
-        """
-        mkdir -p {output}
-        cd {output}
-        # Baixa o banco pré-formatado (muito mais rápido que fasta bruto)
-        wget https://ftp.ncbi.nlm.nih.gov/blast/db/mito.tar.gz
-        tar -xzvf mito.tar.gz
-        rm mito.tar.gz
-        """
-
 #get basta taxonomy
 rule setup_basta_taxonomy:
     output:

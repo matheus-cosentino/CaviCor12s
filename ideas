@@ -54,3 +54,126 @@ vsearch --usearch_global reads_originais_filtradas.fastq \
   --best_hit 1 \
   --percentage 97 \
   --lca_depth 100
+
+
+  A sua lógica está muito sólida. Você tem duas metades da informação separadas:
+
+Samtools (idxstats): Sabe quantas reads tem cada cluster (Ex: Cluster_1 = 500 reads), mas não sabe quem é o cluster.
+
+BASTA: Sabe quem é cada cluster (Ex: Cluster_1 = Desmodus rotundus), mas não sabe quantas reads ele tem.
+
+Para obter a tabela final (Amostra X Espécie X Quantidade), você precisa cruzar essas duas informações usando o ID do cluster como chave comum.
+
+Como o samtools não faz esse cruzamento com arquivos de texto externos, a melhor solução é um pequeno script em Python (pandas) dentro do Snakemake para gerar essa tabela final limpa.
+
+Aqui está a estratégia para conectar as pontas:
+
+1. O Script de Cruzamento (Python)
+Crie um script chamado scripts/merge_counts.py. Ele vai ler a saída do idxstats, a saída do basta, juntar tudo e somar os clusters que deram a mesma espécie.
+
+Python
+import pandas as pd
+import sys
+import os
+
+# Inputs vindos do Snakemake
+idxstats_file = sys.argv[1] # abundancia_bruta.txt
+basta_file = sys.argv[2]    # anotacao_final.txt
+sample_name = sys.argv[3]   # Nome da amostra (para a coluna)
+output_file = sys.argv[4]   # Arquivo final
+
+# 1. Carregar contagens do Samtools
+# idxstats tem 4 colunas: Reference, Sequence length, Mapped reads, Unmapped reads
+counts = pd.read_csv(idxstats_file, sep='\t', header=None, 
+                     names=['cluster_id', 'length', 'mapped_reads', 'unmapped_reads'])
+# Filtramos clusters com 0 reads (opcional)
+counts = counts[counts['mapped_reads'] > 0]
+
+# 2. Carregar taxonomia do BASTA
+# BASTA output default: header varia, mas geralmente col 0 é ID e col 1 é Taxonomia completa
+# Ajuste o 'sep' se seu BASTA estiver saindo com tabulação
+basta = pd.read_csv(basta_file, sep='\t', header=None) 
+# Assumindo que col 0 = cluster_id e col 1 = taxonomia_string (Ex: "Eukaryota;Chordata...")
+basta = basta.iloc[:, [0, 1]] 
+basta.columns = ['cluster_id', 'taxonomy']
+
+# 3. Cruzar (Merge)
+merged = pd.merge(counts, basta, on='cluster_id', how='left')
+
+# Preencher quem o BASTA não identificou como "Unidentified"
+merged['taxonomy'] = merged['taxonomy'].fillna('Unidentified')
+
+# 4. Agregar por Taxonomia
+# Se Cluster_1 é 'Morcego' (10 reads) e Cluster_2 é 'Morcego' (20 reads), 
+# a contagem final para 'Morcego' deve ser 30.
+final_table = merged.groupby('taxonomy')['mapped_reads'].sum().reset_index()
+
+# Adicionar nome da amostra
+final_table['Sample'] = sample_name
+
+# Organizar colunas
+final_table = final_table[['Sample', 'taxonomy', 'mapped_reads']]
+
+# Salvar
+final_table.to_csv(output_file, sep='\t', index=False)
+2. A Regra no Snakemake
+Agora adicionamos a regra que chama esse script. Ela vai depender das duas regras anteriores (mapeamento e taxonomia).
+
+Python
+rule merge_results:
+    input:
+        counts = "results/{sample}/abundance/abundancia_bruta.txt", # Vindo do samtools idxstats
+        taxonomy = "results/{sample}/basta/id_{pident}/anotacao_final.txt" # Vindo do BASTA
+    output:
+        "results/{sample}/final_tables/counts_id{pident}.tsv"
+    params:
+        sample_name = "{sample}"
+    shell:
+        """
+        python scripts/merge_counts.py \
+            {input.counts} \
+            {input.taxonomy} \
+            {params.sample_name} \
+            {output}
+        """
+3. (Opcional) Tabela Matriz Final (Todas as amostras juntas)
+Geralmente, no final do projeto, você quer uma matriz gigante onde as linhas são espécies e as colunas são as amostras (estilo OTU table).
+
+Você pode fazer uma regra aggregate_all que roda no final:
+
+Python
+rule collapse_all_samples:
+    input:
+        # Pega a tabela individual de TODAS as amostras
+        expand("results/{sample}/final_tables/counts_id{pident}.tsv", sample=SAMPLES, pident=config["blast"]["identities"])
+    output:
+        "results/final_matrix_id{pident}.tsv"
+    run:
+        import pandas as pd
+        
+        # Filtra os inputs para pegar apenas o pident atual (já que o expand acima pega tudo misturado se não cuidar)
+        # Uma forma mais pythonica seria fazer essa regra rodar por pident
+        inputs_list = [f for f in input if f"id{wildcards.pident}" in f]
+        
+        df_list = []
+        for file in inputs_list:
+            df_list.append(pd.read_csv(file, sep='\t'))
+            
+        full_df = pd.concat(df_list)
+        
+        # Pivotar: Linhas = Taxonomia, Colunas = Samples, Valores = Reads
+        matrix = full_df.pivot_table(index='taxonomy', columns='Sample', values='mapped_reads', fill_value=0)
+        
+        matrix.to_csv(output[0], sep='\t')
+Resumo do Fluxo de Dados:
+Reads Brutas → Chopper (Limpeza)
+
+Reads Limpas → VSEARCH → Clusters (Centroids)
+
+Reads Limpas + Clusters → Minimap2 + Samtools → Tabela 1: Cluster ID + Quantidade
+
+Clusters + BLAST + BASTA → Tabela 2: Cluster ID + Nome da Espécie
+
+Tabela 1 + Tabela 2 → Python Script → Tabela Final: Espécie + Quantidade
+
+Essa abordagem resolve o problema de múltiplos clusters apontarem para a mesma espécie (o script soma eles) e também lida com o que não foi identificado (marca como "Unidentified" mas mantém a contagem para você saber quanto dado perdeu).

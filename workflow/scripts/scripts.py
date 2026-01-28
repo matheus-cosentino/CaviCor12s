@@ -23,10 +23,37 @@ from collections import defaultdict
 from Bio import SeqIO
 import gzip
 
+################################
+# --- 2. Global Variables --- #
+###############################
+OUT_DIR = config["output_dir"]
+BLAST_IDENTITIES = config["blast"]["perc_identity"]
+MODULES = config["modules"]
 
 ##########################################################
-# --- 2. Function to obtain final outputs per module --- #
+# --- 3. Function to obtain final outputs per module --- #
 ##########################################################
 
 def get_final_outputs():
   final_outputs = []
+    if MODULES["12s_diversity"]:
+      final_outputs.extend(expand("{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt", sample=SAMPLE, pident=BLAST_IDENTITIES, out_dir=OUT_DIR)),
+      final_outputs.extend(expand("{out_dir}/{sample}/Krona/{sample}_Basta_Krona.html", out_dir=OUT_DIR, sample=SAMPLE))
+    
+    if MODULES["rarefaction"]:
+      final_outputs.append(expand("{out_dir}/Rarefaction_Curve/Basta_Rarefaction_Curve.pdf", out_dir=OUT_DIR)),
+      final_outputs.append(expand("{out_dir}/{sample}/Rarefaction_Curve/{sample}_Basta_Rarefaction_Curve.pdf", out_dir=OUT_DIR, sample=SAMPLE))
+
+    if MODULES["abundancy"]:
+      final_outputs.append(expand("{out_dir}/Samtools/{sample}_Brute_Abundancy.txt", out_dir=OUT_DIR, sample=SAMPLE))
+
+
+###################################################
+# --- 3. Get Taxonomy reports of all samples --- #
+##################################################
+def get_all_basta_read_outputs(wildcards):
+    paths = []
+    for s in SAMPLE:
+      meta = SAMPLE_META.get(s)
+        paths.append(expand("{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt", sample=SAMPLE, pident=BLAST_IDENTITIES, out_dir=OUT_DIR))
+    return paths
