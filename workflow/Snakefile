@@ -19,28 +19,43 @@ configfile: "config/config.yaml"
 ##############################################
 # --- 2. Define Conda Environment Paths --- #
 #############################################  
+BASTA = workflow.source_path(config["envs"]["basta"])
+BLAST = workflow.source_path(config["envs"]["blast"])
 CAVICOR = workflow.source_path(config["envs"]["cavicor"])
 CHOPPER = workflow.source_path(config["envs"]["chopper"])
-VSEARCH = workflow.source_path(config["envs"]["vsearch"])
 MINIMAP2 = workflow.source_path(config["envs"]["minimap2"])
-SAMTOOLS = workflow.source_path(config["envs"]["samtools"])
-BLAST = workflow.source_path(config["envs"]["blast"])
-BASTA = workflow.source_path(config["envs"]["basta"])
 R_RAREFACTION = workflow.source_path(config["envs"]["r_rarefaction"])
+SAMTOOLS = workflow.source_path(config["envs"]["samtools"])
+VSEARCH = workflow.source_path(config["envs"]["vsearch"])
 
-###########################################
-# --- 3. Import functions to be used --- #
-##########################################
-
-############################################
-# --- 4. Export functions to be used.  --- #
-###########################################
-
-###########################################################
-# --- 5. Define workflown directory and local infos  --- #
-##########################################################
+#######################################################
+# --- 3. Define workflown directory and Variables --- #
+#######################################################
 DATA = config["data_dir"]
 OUT_DIR = config["output_dir"]
+
+# Global Variables
+SAMPLES, = glob_wildcards(DATA, "{sample}.fastq.gz")
+
+
+###########################################
+# --- 4. Import functions to be used --- #
+##########################################
+import os
+import ast 
+from glob import glob
+from scripts.functions import get_final_outputs
+
+############################################
+# --- 5. Export functions to be used.  --- #
+###########################################
+import scripts.functions as functions
+functions.DATA = DATA
+functions.SAMPLE = SAMPLE
+functions.OUT_DIR = OUT_DIR
+functions.MODULES = config["modules"]
+functions.get_final_outputs = get_final_outputs
+
 
 #######################################
 # --- 6. Load the Workflow Rules --- #
@@ -51,7 +66,6 @@ include: "rules/blast.smk"
 ######################################
 # --- 7. Obtain the final target --- #
 ######################################
-
 rule all:
   input:
     get_final_outputs() 

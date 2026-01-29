@@ -37,8 +37,8 @@ MODULES = config["modules"]
 def get_final_outputs():
   final_outputs = []
     if MODULES["12s_diversity"]:
-      final_outputs.extend(expand("{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt", sample=SAMPLE, pident=BLAST_IDENTITIES, out_dir=OUT_DIR)),
-      final_outputs.extend(expand("{out_dir}/{sample}/Krona/{sample}_Basta_Krona.html", out_dir=OUT_DIR, sample=SAMPLE))
+      final_outputs.extend(expand("{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt", sample=SAMPLE, pident=BLAST_IDENTITIES, out_dir=OUT_DIR))
+      #final_outputs.extend(expand("{out_dir}/{sample}/Krona/{sample}_Basta_Krona.html", out_dir=OUT_DIR, sample=SAMPLE))
     
     if MODULES["rarefaction"]:
       final_outputs.append(expand("{out_dir}/Rarefaction_Curve/Basta_Rarefaction_Curve.pdf", out_dir=OUT_DIR)),

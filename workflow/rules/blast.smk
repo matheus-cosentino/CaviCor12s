@@ -11,39 +11,47 @@
 #                                                                         #
 ###########################################################################
 
-
-### get blast database
 rule get_mito_db:
+  message:
+    """
+    > Blast >> Get Mito Blast DB <<
+    > Output >> {output} <<
+    """
   output:
-      directory("resources/blast_db/mito")
+    directory("resources/blast_db/mito")
   log:
-      "results/log/get_mito_db.log"
+    "results/Blast_MitoDB_log/get_mito_db.log"
   shell:
-      """
-      mkdir -p {output}
-      cd {output}
-      # Baixa o banco pré-formatado (muito mais rápido que fasta bruto)
-      wget https://ftp.ncbi.nlm.nih.gov/blast/db/mito.tar.gz   > {log} 2>&1
-      tar -xzvf mito.tar.gz
-      rm mito.tar.gz 
-      """
+  """
+  mkdir -p {output}
+  echo "Downloading DB..." > {log}
+  wget "https://ftp.ncbi.nlm.nih.gov/blast/db/mito.tar.gz" -O {output}/mito.tar.gz >> {log} 2>&1
+  echo "Extracting Files..." >> {log}
+  tar -xzvf {output}/mito.tar.gz -C {output} >> {log} 2>&1
+  rm {output}/mito.tar.gz
+  echo "Done!" >> {log}
+  """
 
-### blast mito
 rule blast_mito:
+  message:
+    """
+    > Blastn >> Mito Blastn <<
+    > Input >> {input.query} <<
+    > Output >> {output} <<
+    > Identity >> {wildcards.pident} <<
+    """
   input:
-    query="results/{sample}_consensus_cluster.fasta", 
+    query="results/{sample}/VSearch/{sample}_consensus_cluster.fasta", 
     db_dir="resources/blast_db/mito"
   output:
-    "results/{sample}/{sample}_{pident}_blast_mito.txt"
+    "results/{sample}/Blast{sample}_{pident}_Blastn_12s.txt"
   threads: 
-    8
+    4
   params:
-    max_target_seqs=config["blast"]["max_target_seqs"],
-    evalue=config["blast"]["evalue"],
-    perc_identity=config["blast"]["perc_identity"]
-    
+    max_target_seqs=config["blast"]["max_target_seqs"][0],
+    evalue=config["blast"]["evalue"][0]
   shell:
     """
     DB_PATH="{input.db_dir}/mito"    
-    blastn -query {input.query} -db $DB_PATH -num_threads {threads} -evalue {params.evalue} -max_target_seqs {params.max_target_seqs} -perc_identity {params.perc_identity} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids" > {output}
+    blastn -query {input.query} -db $DB_PATH -num_threads {threads} -evalue {params.evalue} -max_target_seqs {params.max_target_seqs} -perc_identity {wildcards.pident} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids" > {output}
     """

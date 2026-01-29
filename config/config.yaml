@@ -31,10 +31,11 @@ envs:
 ### Modules of requested analysis
   12s_diversity: true #blast and basta diversity of samples
   rarefaction: true #rarefaction curve of data
+  abundancy: true #compare abundancy within all run samples
 
 ### resources
 #diamond db to download
-diamond:
+blast:
   - "resources/blast/" 
 #basta db taxonomy
 basta:
