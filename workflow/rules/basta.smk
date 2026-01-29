@@ -1,15 +1,16 @@
-###########################################################################
-#                              Rules Basta                                #
-#                         MSc. Matheus Cosentino                          #
-###########################################################################
-#   ______     ___   ____    ____  __    ______   ______   .______        #
-#  /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
-# |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
-# |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
-# |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
-#  \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
-#                                                                         #
-###########################################################################
+############################################################################
+#                               Rules Basta                                #
+#                          MSc. Matheus Cosentino                          #
+############################################################################
+#    ______     ___   ____    ____  __    ______   ______   .______        #
+#   /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
+#  |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
+#  |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
+#  |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
+#   \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
+#                                                                          #
+############################################################################
+
 
 rule setup_basta_taxonomy:
   message:
@@ -21,15 +22,19 @@ rule setup_basta_taxonomy:
     "resources/basta_db/taxonomy.sqlite"
   params:
     db_dir="resources/basta_db"
+  conda:
+    BASTA
+  log:
+    "results/Databases_log/setup_basta_taxonomy.log"    
   shell:
     """
-    basta download gb -d {params.db_dir}
+    basta download gb -d {params.db_dir} >> {log} 2>&1
     """
 
 rule basta_search:
   message:
     """
-    > Blastn >> Mito Blastn <<
+    > Basta >> LCA Mito12S  <<
     > Input >> {input.blast} <<
     > Output >> {output} <<
     > Identity >> {wildcards.pident} <<
@@ -39,8 +44,18 @@ rule basta_search:
     tax_db="resources/basta_db/taxonomy.sqlite"
   output:
     "{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt"
+  conda:
+    BASTA
+  threads:
+    2
+  log:
+    "results/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.log"
+  params:
+    lca_depth = config["basta"]["lca_depth"],
+    best_hit = config["basta"]["best_hit"],
+    percentage = config["basta"]["percentage"] 
   shell:
     """   
-    basta sequence {input.blast} {output}  {input.tax_db} --best_hit 1 --majority 90 --percentage 97
+    basta sequence {input.blast} {output}  {input.tax_db} --best_hit {params.best_hit} --majority {params.lca_depth} --percentage {params.percentage} >> {log} 2>&1
     """
 

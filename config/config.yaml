@@ -1,15 +1,15 @@
-###########################################################################
-#                               Config file                               #
-#                         MSc. Matheus Cosentino                          #
-###########################################################################
-#   ______     ___   ____    ____  __    ______   ______   .______        #
-#  /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
-# |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
-# |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
-# |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
-#  \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
-#                                                                         #
-###########################################################################
+############################################################################
+#                              Config File                                 #
+#                          MSc. Matheus Cosentino                          #
+############################################################################
+#    ______     ___   ____    ____  __    ______   ______   .______        #
+#   /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
+#  |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
+#  |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
+#  |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
+#   \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
+#                                                                          #
+############################################################################
 
 ### Main output directory
 output_dir: "results"
@@ -30,8 +30,8 @@ envs:
 
 ### Modules of requested analysis
   12s_diversity: true #blast and basta diversity of samples
-  rarefaction: true #rarefaction curve of data
-  abundancy: true #compare abundancy within all run samples
+  rarefaction: false #rarefaction curve of data
+  abundancy: false #compare abundancy within all run samples
 
 ### resources
 #diamond db to download
@@ -43,8 +43,6 @@ basta:
 #logos
 logo_dirs: 
   - "resources/logo/"
-
-
 
 ########### params
 blast:
@@ -79,3 +77,19 @@ basta:
     #- 100   #BASTA reads 3 best hits for each query sequence and returns the LCA of all sequences
   best_hit: 1
   percentage: 97
+
+vsearch:
+  identity:
+    #- 0.99
+    #- 0.95
+    - 0.9
+    #- 0.8
+    #- 0.7
+
+chopper:
+  min_quality: 
+    - 10
+  min_length: 
+    - 200
+  max_length: 
+    - 600
