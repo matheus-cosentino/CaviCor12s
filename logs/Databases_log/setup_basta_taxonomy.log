@@ -1,0 +1,53 @@
+
+##### Downloading and processing mapping file(s) from NCBI ###
+
+
+# [BASTA STATUS] Downloading mapping files
+
+
+# [BASTA STATUS] (Re-)Downloading file nucl_gb.accession2taxid.gz
+
+Traceback (most recent call last):
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/bin/basta", line 118, in <module>
+    main.run_basta(args) 
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/site-packages/basta/BastaMain.py", line 83, in run_basta
+    self._basta_download(args)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/site-packages/basta/BastaMain.py", line 167, in _basta_download
+    dutils.down_and_check(args.ftp,map_file,args.directory)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/site-packages/basta/DownloadUtils.py", line 55, in down_and_check
+    down(ftp,fn,out_dir)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/site-packages/basta/DownloadUtils.py", line 72, in down
+    wget_file(ftp,fn,out_dir) 
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/site-packages/basta/DownloadUtils.py", line 38, in wget_file
+    wget.download(os.path.join(path, f), os.path.join(outdir, f))
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/site-packages/wget.py", line 526, in download
+    (tmpfile, headers) = ulib.urlretrieve(binurl, tmpfile, callback)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 239, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 214, in urlopen
+    return opener.open(url, data, timeout)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 517, in open
+    response = self._open(req, data)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 534, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 494, in _call_chain
+    result = func(*args)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 1563, in ftp_open
+    fw = self.connect_ftp(user, passwd, host, port, dirs, req.timeout)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 1584, in connect_ftp
+    return ftpwrapper(user, passwd, host, port, dirs, timeout,
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 2405, in __init__
+    self.init()
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/urllib/request.py", line 2414, in init
+    self.ftp.connect(self.host, self.port, self.timeout)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/ftplib.py", line 162, in connect
+    self.welcome = self.getresp()
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/ftplib.py", line 244, in getresp
+    resp = self.getmultiline()
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/ftplib.py", line 234, in getmultiline
+    nextline = self.getline()
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/ftplib.py", line 212, in getline
+    line = self.file.readline(self.maxline + 1)
+  File "/Users/cosentino/Documents/CaviCor12s/.snakemake/conda/e264d7ac28427615700b4a03463fbe39_/lib/python3.9/socket.py", line 716, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt

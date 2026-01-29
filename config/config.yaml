@@ -19,16 +19,17 @@ data_dir: "data"
 
 ### Envs with conda yaml paths to be installed
 envs:
-  cavicor: "envs/cavicor.yaml"
-  chopper: "envs/chopper.yaml"
-  vsearch: "envs/vsearch.yaml"
-  minimap2: "envs/minimap2.yaml"
-  samtools: "envs/samtools.yaml"
-  blast: "envs/blast.yaml"
-  basta: "envs/basta.yaml"
-  r_rarefaction: "envs/r_rarefaction.yaml"
+  basta: "../envs/basta.yaml"  
+  cavicor: "../envs/cavicor.yaml"
+  chopper: "../envs/chopper.yaml"
+  vsearch: "../envs/vsearch.yaml"
+  minimap2: "../envs/minimap2.yaml"
+  samtools: "../envs/samtools.yaml"
+  blast: "../envs/blast.yaml"
+  r_rarefaction: "../envs/r_rarefaction.yaml"
 
 ### Modules of requested analysis
+modules:
   12s_diversity: true #blast and basta diversity of samples
   rarefaction: false #rarefaction curve of data
   abundancy: false #compare abundancy within all run samples

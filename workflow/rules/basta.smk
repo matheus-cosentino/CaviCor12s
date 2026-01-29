@@ -25,7 +25,7 @@ rule setup_basta_taxonomy:
   conda:
     BASTA
   log:
-    "results/Databases_log/setup_basta_taxonomy.log"    
+    "logs/Databases_log/setup_basta_taxonomy.log"    
   shell:
     """
     basta download gb -d {params.db_dir} >> {log} 2>&1
@@ -37,10 +37,10 @@ rule basta_search:
     > Basta >> LCA Mito12S  <<
     > Input >> {input.blast} <<
     > Output >> {output} <<
-    > Identity >> {wildcards.pident} <<
+    > Identity >> {pident} <<
     """
   input:
-    blast="results/{sample}/Blast{sample}_{pident}_Blastn_12s.txt",
+    blast="{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt",
     tax_db="resources/basta_db/taxonomy.sqlite"
   output:
     "{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt"
@@ -49,7 +49,7 @@ rule basta_search:
   threads:
     2
   log:
-    "results/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.log"
+    "{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.log"
   params:
     lca_depth = config["basta"]["lca_depth"],
     best_hit = config["basta"]["best_hit"],

@@ -13,21 +13,21 @@
 
 rule clean_reads:
   input:
-    fastq = 
+    fastq = os.path.join(DATA, "{sample}.fastq.gz")
   output:
-    fastq_clean = "results/{sample}/Chopper/{sample}_filtered_fastq.gz"
-  params:
-    qual = config["chopper"]["min_quality"],
-    min_len = config["chopper"]["min_length"],
-    max_len = config["chopper"]["max_length"]
+    fastq_clean = "{out_dir}/{sample}/Chopper/{sample}_filtered_fastq.gz"
+  params:  
+    qual = config["chopper"]["min_quality"][0],
+    min_len = config["chopper"]["min_length"][0],
+    max_len = config["chopper"]["max_length"][0]
   threads: 
     4
   conda:
     CHOPPER
   log:
-    
+    "{out_dir}/{sample}/Chopper/{sample}.log"
   shell:
     """
     gunzip -c {input.fastq} | \
-    chopper --quality {params.qual} --minlength {params.min_len} --maxlength {params.max_len} --threads {threads} 2> {log} | gzip > {output.fastq_clean} >> {log} 2>&1
+    chopper --quality {params.qual} --minlength {params.min_len} --maxlength {params.max_len} --threads {threads} 2> {log} | gzip > {output.fastq_clean} 2> {log}
     """

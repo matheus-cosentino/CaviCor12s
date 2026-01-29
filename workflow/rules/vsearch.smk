@@ -19,10 +19,10 @@ rule vsearch:
     > Output >> {output} <<
     """
   input:
-    chopper= "results/{sample}/Chopper/{sample}_filtered.fastq"
+    chopper= "{out_dir}/{sample}/Chopper/{sample}_filtered_fastq.gz"
   output:
-    centroid= "results/{sample}/Vsearch/{sample}_centroids.fasta",
-    consenso= "results/{sample}/Vsearch/{sample}_consenso.fasta"
+    centroid= "{out_dir}/{sample}/Vsearch/{sample}_centroids.fasta",
+    consenso= "{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta"
   params:
     identity = config["vsearch"]["identity"][0]
   conda:
@@ -30,7 +30,7 @@ rule vsearch:
   threads: 
     4
   log:
-    "results/{sample}/Vsearch/{sample}_Vsearch.log"
+    "{out_dir}/{sample}/Vsearch/{sample}_Vsearch.log"
   shell:
     """ 
     vsearch --cluster_fast {input.chopper} --id {params.identity} --threads {threads} --centroids {output.centroid} --consout {output.consenso} --sizeout  >> {log} 2>&1

@@ -23,7 +23,7 @@ rule get_mito_db:
   conda:
     BLAST
   log:
-    "results/Databases_log/get_mito_db.log"
+    "logs/Databases_log/get_mito_db.log"
   shell:
     """
     mkdir -p {output}
@@ -44,10 +44,10 @@ rule blast_mito:
     > Identity >> {wildcards.pident} <<
     """
   input:
-    query="results/{sample}/Vsearch/{sample}_consenso.fasta", 
+    query="{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta", 
     db_dir="resources/blast_db/mito"
   output:
-    "results/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt"
+    "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt"
   threads: 
     4
   params:
@@ -56,7 +56,7 @@ rule blast_mito:
   conda:
     BLAST
   log:
-    "results/{sample}/Blast/{sample}_{pident}_Blastn_12s.log"
+    "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.log"
   shell:
     """
     DB_PATH="{input.db_dir}/mito"    
