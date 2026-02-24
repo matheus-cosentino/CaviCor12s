@@ -59,6 +59,102 @@ rule blast_mito:
     "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.log"
   shell:
     """
-    DB_PATH="{input.db_dir}/mito"    
-    blastn -query {input.query} -db $DB_PATH -num_threads {threads} -evalue {params.evalue} -max_target_seqs {params.max_target_seqs} -perc_identity {wildcards.pident} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids" > {output} >> {log} 2>&1
+    export BLASTDB=$(pwd)/{input.db_dir}
+    blastn -query {input.query} -db mito -num_threads {threads} -evalue {params.evalue} -max_target_seqs {params.max_target_seqs} -perc_identity {wildcards.pident} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids sscinames scomnames slineage" -out {output} 2>&1>> {log} 
     """
+
+rule get_taxdump:
+  message:
+    """
+    > TamDump DB >> Get Database <<
+    > Output >> {output} <<
+    """
+  conda:
+    TAXONKIT
+  threads: 
+    1
+  output:
+    directory("resources/taxonomy/taxdump")
+  log:
+    "logs/Databases_log/get_taxdump.log"
+  shell:
+    """
+    mkdir -p {output}
+    wget -c https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz -O {output}/taxdump.tar.gz >> {log} 2>&1
+    tar -zxvf {output}/taxdump.tar.gz -C {output} >> {log} 2>&1
+    """
+
+rule get_lineages:
+  message:
+    """
+    > LCA TamDump >> LCA Algo <<
+    > Input >> {input.blast} & {input.db} <<
+    > Output >> {output} <<
+    """
+  input:
+    blast = "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt",
+    db = rules.get_taxdump.output
+  output:
+    "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt"
+  conda:
+    TAXONKIT
+  threads: 
+    1
+  shell:
+    """
+    taxonkit lca -i 13 --data-dir {input.db} {input.blast} | \
+    taxonkit reformat -i 14 --data-dir {input.db} -f "{{p}};{{c}};{{o}};{{f}};{{g}}" > {output}
+    
+    """
+
+rule summarize_blast_lca:
+  message:
+    """
+    > LCA Summarize >> LCA Summary <<
+    > Input >> {input.blast_out} <<
+    > Output >> {output.abundance_table} <<
+    """
+  input:
+    blast_out= "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt"
+  output:
+    abundance_table="{out_dir}/{sample}/Abundance/{sample}_{pident}_Abundance_table.tsv"
+  run:
+    from collections import defaultdict
+    import re
+    genus_abundance = defaultdict(int)
+    centroids_processados = set()
+
+    with open(input.blast_out, 'r') as f:
+        for line in f:
+            parts = line.strip().split('\t')
+            if len(parts) < 2: continue
+            
+            centroid_id = parts[0]
+            if centroid_id in centroids_processados:
+                continue
+            
+            centroids_processados.add(centroid_id)
+
+            # Extrair o 'size' (abundância de reads no cluster)
+            size_match = re.search(r"size=(\d+)", centroid_id)
+            count = int(size_match.group(1)) if size_match else 1
+            
+            # Pegar a linhagem (LCA já calculado pelo TaxonKit)
+            lineage = parts[-1] 
+            taxa = lineage.split(';')
+            
+            # Extrair Gênero (ajuste o índice se necessário, aqui usamos o 5º nível)
+            if len(taxa) >= 5:
+                genus = taxa[4]
+            elif len(taxa) > 0 and taxa[0] != "":
+                genus = taxa[-1]
+            else:
+                genus = "Unclassified"
+
+            genus_abundance[genus] += count
+
+    # Salvar a tabela final
+    with open(output.abundance_table, 'w') as out:
+        out.write("Genus\tAbundance\n")
+        for genus, total in sorted(genus_abundance.items(), key=lambda x: x[1], reverse=True):
+            out.write(f"{genus}\t{total}\n")

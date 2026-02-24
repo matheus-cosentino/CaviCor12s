@@ -1,18 +1,18 @@
 ideas
 
-
 # data content dir
 data/
 
 #binaries of snakemake
 .snakemake/
 
-# resources downloaded
-resourcer/basta_db
-resources/blast_db
-
 #results of test
 results/ 
 
 #scripts binaries
 workflow/scripts/__psycache__
+
+# Ignorar todo o conteudo da pasta resources
+resources/*
+# Excecao: manter a pasta de logos
+!resources/logo/

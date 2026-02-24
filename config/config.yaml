@@ -19,7 +19,6 @@ data_dir: "data"
 
 ### Envs with conda yaml paths to be installed
 envs:
-  basta: "../envs/basta.yaml"  
   cavicor: "../envs/cavicor.yaml"
   chopper: "../envs/chopper.yaml"
   vsearch: "../envs/vsearch.yaml"
@@ -27,6 +26,8 @@ envs:
   samtools: "../envs/samtools.yaml"
   blast: "../envs/blast.yaml"
   r_rarefaction: "../envs/r_rarefaction.yaml"
+  taxonkit: "../envs/taxonkit.yaml"
+
 
 ### Modules of requested analysis
 modules:
@@ -48,11 +49,11 @@ logo_dirs:
 ########### params
 blast:
   perc_identity: 
-    - 70
-    - 80
-    - 90
+    #- 70
+    #- 80
+    #- 90
     - 95 
-    - 99
+    #- 99
   evalue:
 #    - 0.01    
     - 0.001
@@ -63,27 +64,19 @@ blast:
   max_target_seqs:
 #    - 1
 #    - 5
-    - 10
+    #- 10
 #    - 15
-#    - 20
+    - 20
 #    - 30
 #    - 50
  
-basta:
-  lca_depth:
-    #values between 51 and 99 BASTA returns the taxonomy that is shared by at least the given percentage of hits. 
-    #- 51    #percentage of best hits 51 (minimum)
-    #- 75
-    - 97    
-    #- 100   #BASTA reads 3 best hits for each query sequence and returns the LCA of all sequences
-  best_hit: 1
-  percentage: 97
 
 vsearch:
   identity:
     #- 0.99
     #- 0.95
     - 0.9
+    #- 0.85
     #- 0.8
     #- 0.7
 

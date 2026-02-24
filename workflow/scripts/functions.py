@@ -40,9 +40,9 @@ SAMPLE = []
 def get_final_outputs():
   final_outputs = []
   if MODULES["12s_diversity"]:
-    final_outputs.extend(expand("{out_dir}/{sample}/Basta/{sample}_{pident}_LCA_Taxonomy.txt", sample=SAMPLE, pident=BLAST_IDENTITIES, out_dir=OUT_DIR))
-    #final_outputs.extend(expand("{out_dir}/{sample}/Krona/{sample}_Basta_Krona.html", out_dir=OUT_DIR, sample=SAMPLE))
-    
+    final_outputs.extend(expand("{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt", sample=SAMPLE, pident=BLAST_IDENTITIES, out_dir=OUT_DIR))    
+    final_outputs.extend(expand("{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt", out_dir=OUT_DIR, pident=BLAST_IDENTITIES, sample=SAMPLE))
+    final_outputs.extend(expand("{out_dir}/{sample}/Abundance/{sample}_{pident}_Abundance_table.tsv", out_dir=OUT_DIR, pident=BLAST_IDENTITIES, sample=SAMPLE))
   if MODULES["rarefaction"]:
     final_outputs.append(expand("{out_dir}/Rarefaction_Curve/Basta_Rarefaction_Curve.pdf", out_dir=OUT_DIR)),
     final_outputs.append(expand("{out_dir}/{sample}/Rarefaction_Curve/{sample}_Basta_Rarefaction_Curve.pdf", out_dir=OUT_DIR, sample=SAMPLE))

@@ -40,19 +40,15 @@ functions.get_final_outputs = get_final_outputs
 functions.MODULES = config["modules"]
 functions.BLAST_IDENTITIES = config["blast"]["perc_identity"]
 
-
-
 #######################################################
 # --- 3. Define workflown directory and Variables --- #
 #######################################################
-
 SAMPLES = glob_wildcards(DATA, "{sample}.fastq.gz")
 
 
 ##############################################
 # --- 2. Define Conda Environment Paths --- #
 #############################################  
-BASTA = config["envs"]["basta"]
 BLAST = config["envs"]["blast"]
 CAVICOR = config["envs"]["cavicor"]
 CHOPPER = config["envs"]["chopper"]
@@ -60,14 +56,12 @@ MINIMAP2 = config["envs"]["minimap2"]
 R_RAREFACTION = config["envs"]["r_rarefaction"]
 SAMTOOLS = config["envs"]["samtools"]
 VSEARCH = config["envs"]["vsearch"]
-
-
+TAXONKIT = config["envs"]["taxonkit"]
 
 
 #######################################
 # --- 6. Load the Workflow Rules --- #
 ######################################
-include: "rules/basta.smk"
 include: "rules/blast.smk"
 include: "rules/chopper.smk"
 include: "rules/vsearch.smk"
