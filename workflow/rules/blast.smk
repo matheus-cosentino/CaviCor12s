@@ -15,7 +15,7 @@
 rule get_mito_db:
   message:
     """
-    > Blast >> Get Mito Blast DB <<
+    > Blast >> Get Mito Blast DataBase <<
     > Output >> {output} <<
     """
   output:

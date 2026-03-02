@@ -16,3 +16,6 @@ workflow/scripts/__psycache__
 resources/*
 # Excecao: manter a pasta de logos
 !resources/logo/
+
+#log of database
+logs/*

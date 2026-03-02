@@ -21,7 +21,7 @@ rule clean_reads:
     min_len = config["chopper"]["min_length"][0],
     max_len = config["chopper"]["max_length"][0]
   threads: 
-    4
+    1
   conda:
     CHOPPER
   log:

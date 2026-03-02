@@ -28,7 +28,7 @@ rule vsearch:
   conda:
     VSEARCH
   threads: 
-    4
+    2
   log:
     "{out_dir}/{sample}/Vsearch/{sample}_Vsearch.log"
   shell:

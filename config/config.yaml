@@ -86,4 +86,4 @@ chopper:
   min_length: 
     - 200
   max_length: 
-    - 600
+    - 10000
