@@ -1,5 +1,5 @@
 ############################################################################
-#                               Rule Chopper                               #
+#                               Rules MultiQC                              #
 #                          MSc. Matheus Cosentino                          #
 ############################################################################
 #    ______     ___   ____    ____  __    ______   ______   .______        #
@@ -10,24 +10,33 @@
 #   \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
 #                                                                          #
 ############################################################################
-
-rule clean_reads:
-  input:
-    fastq = os.path.join(DATA, "{sample}.fastq.gz")
-  output:
-    fastq_clean = "{out_dir}/{sample}/Chopper/{sample}_filtered_fastq.gz"
-  params:  
-    qual = config["chopper"]["min_quality"][0],
-    min_len = config["chopper"]["min_length"][0],
-    max_len = config["chopper"]["max_length"][0]
-  threads: 
-    1
+rule multiqc_aggregate:
+  message:
+    """
+    > Generate a multiqc report in HTML format all samples
+    > Input: {input.lca}
+    > Output Directory: {output.fasta_dir}
+    """ 
   conda:
-    CHOPPER
+    MULTIQC
+  input:
+    # Use a dedicated function to get only files that MultiQC can parse.
+    files = get_multiqc_inputs()
+  output:
+    report = os.path.join(OUT_DIR, "multiqc_all", "{pident}_multiqc_report.html"),
+    data_dir = directory(os.path.join(OUT_DIR, "{pident}_multiqc_report.html"))
+  params:
+    extra = "--title 'CaviCor12s Aggregate Report'"
   log:
-    "{out_dir}/{sample}/Chopper/{sample}.log"
+    os.path.join(OUT_DIR, "logs", "{pident}_multiqc_aggregate.log")
   shell:
     """
-    gunzip -c {input.fastq} | \
-    chopper --quality {params.qual} --minlength {params.min_len} --maxlength {params.max_len} --threads {threads} 2> {log} | gzip > {output.fastq_clean} 2> {log}
+    multiqc \
+      --quiet \
+      --export \
+      --force \
+      --outdir {output.data_dir} \
+      --filename multiqc_report.html \
+      {params.extra} \
+      {input.files} > {log} 2>&1 
     """

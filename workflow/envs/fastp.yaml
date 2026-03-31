@@ -1,7 +1,7 @@
-name: chopper
+name: fastp
 channels:
   - conda-forge
   - bioconda
   - nodefaults
 dependencies:
-  - chopper=0.12
+  - fastp=1.3.1

@@ -20,28 +20,25 @@ data_dir: "data"
 ### Envs with conda yaml paths to be installed
 envs:
   cavicor: "../envs/cavicor.yaml"
-  chopper: "../envs/chopper.yaml"
+  fastp: "../envs/fastp.yaml"
   vsearch: "../envs/vsearch.yaml"
   minimap2: "../envs/minimap2.yaml"
   samtools: "../envs/samtools.yaml"
   blast: "../envs/blast.yaml"
   r_rarefaction: "../envs/r_rarefaction.yaml"
   taxonkit: "../envs/taxonkit.yaml"
-
+  multiqc: "../envs/multiqc.yaml"
 
 ### Modules of requested analysis
 modules:
   12s_diversity: true #blast and basta diversity of samples
+  quality_control: true #data quality control
   rarefaction: false #rarefaction curve of data
-  abundancy: false #compare abundancy within all run samples
 
 ### resources
 #diamond db to download
 blast:
   - "resources/blast/" 
-#basta db taxonomy
-basta:
-  - "resources/basta/"
 #logos
 logo_dirs: 
   - "resources/logo/"
@@ -50,14 +47,14 @@ logo_dirs:
 blast:
   perc_identity: 
     #- 70
-    #- 80
-    #- 90
+    - 80
+    - 90
     - 95 
     #- 99
   evalue:
 #    - 0.01    
-    - 0.001
-#    - 0.00001
+    #- 0.001
+    - 0.00001
 #    - 0.000001
 #    - 0.0000001
 #    - 0.00000001
@@ -80,10 +77,10 @@ vsearch:
     #- 0.8
     #- 0.7
 
-chopper:
+fastp:
   min_quality: 
     - 10
   min_length: 
     - 200
   max_length: 
-    - 10000
+    - 600

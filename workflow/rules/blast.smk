@@ -49,7 +49,7 @@ rule blast_mito:
   output:
     "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt"
   threads: 
-    4
+    2
   params:
     max_target_seqs=config["blast"]["max_target_seqs"][0],
     evalue=config["blast"]["evalue"][0]
@@ -158,3 +158,66 @@ rule summarize_blast_lca:
         out.write("Genus\tAbundance\n")
         for genus, total in sorted(genus_abundance.items(), key=lambda x: x[1], reverse=True):
             out.write(f"{genus}\t{total}\n")
+
+rule extract_fastas_by_lca:
+    message:
+        """
+        > Extracting Fasta by LCA taxon
+        > Input: {input.lca}
+        > Output Directory: {output.fasta_dir}
+        """
+    input:
+        lca = "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt",
+        query = "{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta"
+    output:
+        fasta_dir = directory("{out_dir}/{sample}/Fasta_by_Genus_{pident}/")
+    run:
+        import os
+        from Bio import SeqIO
+
+        # 1. Mapear cada ID de sequência para o táxon atribuído pelo LCA
+        seq_to_taxon = {}
+        with open(input.lca, 'r') as f:
+            for line in f:
+                parts = line.strip().split('\t')
+                if len(parts) < 2: continue
+                
+                # O ID da query é o primeiro campo [cite: 19, 20]
+                query_id = parts[0]
+                # A linhagem formatada é o último campo (após taxonkit reformat) [cite: 21]
+                lineage = parts[-1]
+                
+                # Extração do táxon seguindo sua lógica: 
+                # Tenta o gênero (5º nível), se não houver, pega o último nível disponível [cite: 22]
+                taxa = [t for t in lineage.split(';') if t]
+                if len(taxa) >= 5:
+                    taxon = taxa[4]
+                elif taxa:
+                    taxon = taxa[-1]
+                else:
+                    taxon = "Unclassified"
+                
+                # Sanitização simples para evitar problemas com nomes de arquivos
+                taxon_clean = taxon.replace(" ", "_").replace("/", "_").replace("(", "").replace(")", "")
+                seq_to_taxon[query_id] = taxon_clean
+
+        # 2. Garantir que o diretório de saída existe
+        os.makedirs(output.fasta_dir, exist_ok=True)
+
+        # 3. Ler o FASTA de entrada e distribuir as sequências
+        # Usamos um dicionário para manter os arquivos abertos apenas durante a escrita
+        handles = {}
+        try:
+            for record in SeqIO.parse(input.query, "fasta"):
+                # O ID no arquivo LCA deve bater com o ID no FASTA [cite: 19, 25]
+                if record.id in seq_to_taxon:
+                    t_name = seq_to_taxon[record.id]
+                    file_path = os.path.join(output.fasta_dir, f"{t_name}.fasta")
+                    
+                    if t_name not in handles:
+                        handles[t_name] = open(file_path, "w")
+                    
+                    SeqIO.write(record, handles[t_name], "fasta")
+        finally:
+            for h in handles.values():
+                h.close()

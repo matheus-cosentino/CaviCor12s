@@ -1,5 +1,5 @@
 ############################################################################
-#                               Rules Vsearch.                             #
+#                               Rule Fastp                                 #
 #                          MSc. Matheus Cosentino                          #
 ############################################################################
 #    ______     ___   ____    ____  __    ______   ______   .______        #
@@ -11,27 +11,25 @@
 #                                                                          #
 ############################################################################
 
-rule vsearch:
-  message:
-    """
-    > VSearch >> Clustering Amplicon Reads <<
-    > Input >> {input.chopper} <<
-    > Output >> {output} <<
-    """
+rule clean_reads:
   input:
-    chopper= "{out_dir}/{sample}/Fastp/{sample}_filtered_fastq.gz"
+    fastq = os.path.join(DATA, "{sample}.fastq.gz")
   output:
-    centroid= "{out_dir}/{sample}/Vsearch/{sample}_centroids.fasta",
-    consenso= "{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta"
-  params:
-    identity = config["vsearch"]["identity"][0]
-  conda:
-    VSEARCH
+    fastq_clean = "{out_dir}/{sample}/Fastp/{sample}_filtered_fastq.gz",
+    html= "{out_dir}/{sample}/Fastp/{sample}_filtered.html",
+    json= "{out_dir}/{sample}/Fastp/{sample}_filtered.json"
+  params:  
+    qual = config["fastp"]["min_quality"][0],
+    min_len = config["fastp"]["min_length"][0],
+    max_len = config["fastp"]["max_length"][0]
   threads: 
-    2
+    1
+  conda:
+    FASTP
   log:
-    "{out_dir}/{sample}/Vsearch/{sample}_Vsearch.log"
+    "{out_dir}/{sample}/Fastp/{sample}.log"
   shell:
-    """ 
-    vsearch --cluster_fast {input.chopper} --id {params.identity} --threads {threads} --centroids {output.centroid} --consout {output.consenso} --sizeout  >> {log} 2>&1
     """
+    fastp --in1 {input.fastq} --out1 {output.fastq_clean} --html {output.html} --json {output.json} --thread {threads} --qualified_quality_phred {params.qual} --max_len1 {params.max_len} --length_required {params.min_len}  --dedup --trim_poly_g --trim_poly_x  2> {log}        
+    """
+

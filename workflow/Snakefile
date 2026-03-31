@@ -17,8 +17,9 @@
 configfile: "config/config.yaml"
 
 import os
-from scripts.functions import get_final_outputs
 import scripts.functions as functions
+from scripts.functions import get_final_outputs
+from scripts.functions import get_multiqc_inputs
 
 DATA = config["data_dir"]
 OUT_DIR = config["output_dir"]
@@ -39,6 +40,8 @@ functions.OUT_DIR = OUT_DIR
 functions.get_final_outputs = get_final_outputs
 functions.MODULES = config["modules"]
 functions.BLAST_IDENTITIES = config["blast"]["perc_identity"]
+functions.get_multiqc_inputs = get_multiqc_inputs
+
 
 #######################################################
 # --- 3. Define workflown directory and Variables --- #
@@ -51,20 +54,22 @@ SAMPLES = glob_wildcards(DATA, "{sample}.fastq.gz")
 #############################################  
 BLAST = config["envs"]["blast"]
 CAVICOR = config["envs"]["cavicor"]
-CHOPPER = config["envs"]["chopper"]
+FASTP = config["envs"]["fastp"]
 MINIMAP2 = config["envs"]["minimap2"]
 R_RAREFACTION = config["envs"]["r_rarefaction"]
 SAMTOOLS = config["envs"]["samtools"]
 VSEARCH = config["envs"]["vsearch"]
 TAXONKIT = config["envs"]["taxonkit"]
+MULTIQC = config["envs"]["multiqc"]
 
 
 #######################################
 # --- 6. Load the Workflow Rules --- #
 ######################################
 include: "rules/blast.smk"
-include: "rules/chopper.smk"
+include: "rules/fastp.smk"
 include: "rules/vsearch.smk"
+include: "rules/multiqc.smk"
 
 ######################################
 # --- 7. Obtain the final target --- #
