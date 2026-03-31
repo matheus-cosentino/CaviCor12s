@@ -14,8 +14,8 @@ rule multiqc_aggregate:
   message:
     """
     > Generate a multiqc report in HTML format all samples
-    > Input: {input.lca}
-    > Output Directory: {output.fasta_dir}
+    > Input: {input.files}
+    > Output Directory: {output.report}
     """ 
   conda:
     MULTIQC

@@ -48,7 +48,7 @@ def get_final_outputs():
     # Fixes the NameError and logically collects fastp reports for the QC module.
     # Assuming fastp creates .html reports in this path.
     final_outputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.html", out_dir=OUT_DIR, sample=SAMPLE))
-    final_outputs.extend(expand("{out_dir}/multiqc_all/multiqc_report.html", out_dir=OUT_DIR, sample=SAMPLE))
+    final_outputs.extend(expand("{out_dir}/multiqc_all/{pident}_multiqc_report.html", out_dir=OUT_DIR, sample=SAMPLE, pident=BLAST_IDENTITIES))
   #if MODULES["rarefaction"]:
   # final_outputs.append(expand("{out_dir}/Samtools/{sample}_Brute_Abundancy.txt", out_dir=OUT_DIR, sample=SAMPLE))
 
