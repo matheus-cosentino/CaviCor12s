@@ -40,7 +40,7 @@ Ensure you have Conda (Miniconda or Anaconda) installed on your system.
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/your_repo_link/CaviCor12s.git # Replace with the actual repository URL
+git clone https://github.com/matheus-cosentino/CaviCor12s.git # Replace with the actual repository URL
 cd CaviCor12s
 ```
 
