@@ -27,9 +27,9 @@ OUT_DIR = config["output_dir"]
 SAMPLES_OBJ = glob_wildcards(os.path.join(DATA, "{sample}.fastq.gz"))
 SAMPLE = SAMPLES_OBJ.sample
 
-# Verifica se encontrou amostras (bom para debug)
+# Check if samples were found (good for debugging)
 if not SAMPLE:
-    print(f"WARNING: Nenhuma amostra encontrada em {DATA} com extensão .fastq.gz")
+    print(f"WARNING: No samples found in {DATA} with extension .fastq.gz")
 
 ############################################
 # --- 5. Export functions to be used.  --- #
@@ -44,7 +44,7 @@ functions.get_multiqc_inputs = get_multiqc_inputs
 
 
 #######################################################
-# --- 3. Define workflown directory and Variables --- #
+# --- 3. Define workflow directory and Variables --- #
 #######################################################
 SAMPLES = glob_wildcards(DATA, "{sample}.fastq.gz")
 
@@ -73,7 +73,7 @@ include: "rules/multiqc.smk"
 
 ######################################
 # --- 7. Obtain the final target --- #
-######################################
+#####################################
 rule all:
   input:
     get_final_outputs() 

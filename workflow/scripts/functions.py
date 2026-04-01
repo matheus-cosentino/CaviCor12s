@@ -13,7 +13,7 @@
 
 
 ###########################################
-# --- 1. Import libraryes to be used --- #
+# --- 1. Import libraries to be used --- #
 ##########################################
 
 import os, re, glob, time, sys, subprocess, platform, yaml
@@ -34,7 +34,7 @@ SAMPLE = []
 
 
 ##########################################################
-# --- 3. Function to obtain final outputs per module --- #
+# --- 3. Function to get final outputs per module --- #
 ##########################################################
 
 def get_final_outputs():
@@ -71,19 +71,26 @@ def get_all_basta_read_outputs(wildcards):
 ############################################
 def get_multiqc_inputs(wildcards):
   inputs = []
+  
+  # 1. VSEARCH Data
+  inputs.extend(expand("{out_dir}/{sample}/Vsearch/{sample}_vsearch_mqc.tsv", 
+                       out_dir=OUT_DIR, 
+                       sample=SAMPLE))
+
+  # 2. Diversity Data (LCA/Blast)
   if MODULES.get("12s_diversity"):
-    # Inclui o novo arquivo de abundância por gênero formatado para o MultiQC
+    # Abundance by genus (Bar chart)
     inputs.extend(expand("{out_dir}/{sample}/LCA/{sample}_{pident}_genus_mqc.tsv", 
                          out_dir=OUT_DIR, 
                          sample=SAMPLE, 
                          pident=wildcards.pident))
-    
-    # (Opcional) Mantém o sumário de métricas gerais se desejar
+    # BLAST Metrics
     inputs.extend(expand("{out_dir}/{sample}/Blast/{sample}_{pident}_blast_summary_mqc.tsv", 
                          out_dir=OUT_DIR, 
                          sample=SAMPLE, 
                          pident=wildcards.pident))
 
+  # 3. Quality Data (Fastp)
   if MODULES.get("quality_control"):
     inputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.json", 
                          out_dir=OUT_DIR, 

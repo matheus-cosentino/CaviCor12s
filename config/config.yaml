@@ -17,7 +17,7 @@ output_dir: "results"
 ### Add path to directory of files of interest
 data_dir: "data"
 
-### Envs with conda yaml paths to be installed
+### Conda environment YAML paths
 envs:
   cavicor: "../envs/cavicor.yaml"
   fastp: "../envs/fastp.yaml"
@@ -29,17 +29,17 @@ envs:
   taxonkit: "../envs/taxonkit.yaml"
   multiqc: "../envs/multiqc.yaml"
 
-### Modules of requested analysis
+### Analysis Modules
 modules:
-  12s_diversity: true #blast and basta diversity of samples
-  quality_control: true #data quality control
-  rarefaction: false #rarefaction curve of data
+  12s_diversity: true # BLAST and Basta diversity of samples
+  quality_control: true # Data quality control
+  rarefaction: false # Data rarefaction curve
 
 ### resources
-#diamond db to download
+# Diamond DB to download
 blast:
   - "resources/blast/" 
-#logos
+# Logos
 logo_dirs: 
   - "resources/logo/"
 

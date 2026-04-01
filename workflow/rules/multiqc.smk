@@ -1,5 +1,5 @@
 ############################################################################
-#                               Rules MultiQC                              #
+#                               MultiQC Rules                              #
 #                          MSc. Matheus Cosentino                          #
 ############################################################################
 #    ______     ___   ____    ____  __    ______   ______   .______        #
@@ -54,34 +54,69 @@ rule mqc_genus_abundance:
                 if query_id in processed_ids: continue
                 processed_ids.add(query_id)
 
-                # Extrai abundância do cluster (size=N) 
+                # Extracts cluster abundance (size=N) 
                 size_match = re.search(r"size=(\d+)", query_id)
                 count = int(size_match.group(1)) if size_match else 1
                 
-                # Extrai o Gênero (5º nível da linhagem) 
+                # Extracts Genus (5th level of the lineage) 
                 lineage = parts[-1]
                 taxa = [t for t in lineage.split(';') if t]
                 genus = taxa[4] if len(taxa) >= 5 else (taxa[-1] if taxa else "Unclassified")
                 
                 genus_counts[genus] += count
 
-        # Escreve no formato de Custom Content do MultiQC
+        # Write in MultiQC Custom Content format
         with open(output.mqc_file, 'w') as f:
-            # Cabeçalhos de configuração do MultiQC
+            # MultiQC configuration headers
             f.write("# id: 'genus_abundance_plot'\n")
-            f.write("# section_name: 'Abundância Taxonômica (Gênero)'\n")
+            f.write("# section_name: 'Taxonomic Abundance (Genus)'\n")
             f.write("# plot_type: 'bargraph'\n")
             f.write("# pconfig:\n")
-            f.write("#    title: 'Leituras por Gênero'\n")
-            f.write("#    ylab: 'Número de Reads'\n")
+            f.write("#    title: 'Reads per Genus'\n")
+            f.write("#    ylab: 'Number of Reads'\n")
             
-            # Cabeçalho da tabela (Amostra + Gêneros encontrados)
+            # Table header (Sample + Found Genera)
             genera = sorted(genus_counts.keys())
             f.write("Sample\t" + "\t".join(genera) + "\n")
             
-            # Dados da amostra
+            # Sample data
             counts_str = "\t".join(str(genus_counts[g]) for g in genera)
             f.write(f"{wildcards.sample}\t{counts_str}\n")
+
+rule vsearch_summary_mqc:
+    input:
+        log = os.path.join(OUT_DIR, "{sample}/Vsearch/{sample}_Vsearch.log")
+    output:
+        mqc_file = os.path.join(OUT_DIR, "{sample}/Vsearch/{sample}_vsearch_mqc.tsv")
+    run:
+        import re
+        import os
+
+        # Reading the log content
+        with open(input.log, 'r') as f:
+            content = f.read()
+
+        # Regex to capture data from the log
+        # E.g.: "50587495 nt in 89317 seqs"
+        reads_match = re.search(r"in (\d+) seqs", content)
+        # E.g.: "Clusters: 12945"
+        clusters_match = re.search(r"Clusters: (\d+)", content)
+        # E.g.: "Singletons: 11506, 12.9% of seqs"
+        singletons_match = re.search(r"Singletons: (\d+), ([\d.]+)% of seqs", content)
+
+        reads = reads_match.group(1) if reads_match else "0"
+        clusters = clusters_match.group(1) if clusters_match else "0"
+        singletons = singletons_match.group(1) if singletons_match else "0"
+        perc_sing = singletons_match.group(2) if singletons_match else "0"
+
+        # Writing the file formatted for MultiQC
+        with open(output.mqc_file, 'w') as f:
+            f.write("# id: 'vsearch_stats'\n")
+            f.write("# section_name: 'VSEARCH Clustering Summary'\n")
+            f.write("# plot_type: 'table'\n")
+            f.write("Sample\tTotal Reads\tClusters\tSingletons\t% Singletons\n")
+            f.write(f"{wildcards.sample}\t{reads}\t{clusters}\t{singletons}\t{perc_sing}\n")
+
 
 
 rule multiqc_aggregate:
