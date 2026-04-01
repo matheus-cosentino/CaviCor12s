@@ -143,7 +143,7 @@ rule multiqc_aggregate:
     multiqc \
       --quiet \
       --export \
-      --force --pdf \
+      --force  \
       --outdir $(dirname {output.report}) \
       --filename $(basename {output.report}) \
       --config {input.config} \
