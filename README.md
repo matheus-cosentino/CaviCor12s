@@ -128,11 +128,10 @@ To visualize the workflow's Directed Acyclic Graph (DAG), you can run:
 ```bash
 snakemake --dag | dot -Tsvg > resources/logo/dag.svg
 ```
-*(Requires `graphviz` to be installed)*.
 
 This will generate an SVG file of the workflow graph.
 
-!Workflow DAG
+![Workflow DAG](resources/logo/dag.svg)
 ## Output Structure
 All results will be located in the directory specified by `output_dir` (default: `results/`). The structure will be as follows:
 
