@@ -49,7 +49,7 @@ rule blast_mito:
   output:
     "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt"
   threads: 
-    2
+    4
   params:
     max_target_seqs=config["blast"]["max_target_seqs"][0],
     evalue=config["blast"]["evalue"][0]

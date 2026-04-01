@@ -46,10 +46,10 @@ logo_dirs:
 ########### params
 blast:
   perc_identity: 
-    #- 70
+    - 70
     - 80
     - 90
-    - 95 
+    #- 95 
     #- 99
   evalue:
 #    - 0.01    

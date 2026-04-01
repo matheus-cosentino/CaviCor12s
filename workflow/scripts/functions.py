@@ -69,13 +69,23 @@ def get_all_basta_read_outputs(wildcards):
 #############################################
 # --- 5. Get inputs for MultiQC report --- #
 ############################################
-def get_multiqc_inputs():
-  """
-  Collects all files for all samples to be included in the aggregate MultiQC report.
-  """
+def get_multiqc_inputs(wildcards):
   inputs = []
   if MODULES.get("12s_diversity"):
-    inputs.extend(expand("{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt", out_dir=OUT_DIR, sample=SAMPLE, pident=BLAST_IDENTITIES))
+    # Inclui o novo arquivo de abundância por gênero formatado para o MultiQC
+    inputs.extend(expand("{out_dir}/{sample}/LCA/{sample}_{pident}_genus_mqc.tsv", 
+                         out_dir=OUT_DIR, 
+                         sample=SAMPLE, 
+                         pident=wildcards.pident))
+    
+    # (Opcional) Mantém o sumário de métricas gerais se desejar
+    inputs.extend(expand("{out_dir}/{sample}/Blast/{sample}_{pident}_blast_summary_mqc.tsv", 
+                         out_dir=OUT_DIR, 
+                         sample=SAMPLE, 
+                         pident=wildcards.pident))
+
   if MODULES.get("quality_control"):
-    inputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.json", out_dir=OUT_DIR, sample=SAMPLE))
+    inputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.json", 
+                         out_dir=OUT_DIR, 
+                         sample=SAMPLE))
   return inputs
