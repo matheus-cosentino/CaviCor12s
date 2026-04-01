@@ -1,0 +1,11 @@
+# This file controls the appearance and order of the MultiQC report.
+
+# The 'module_order' list specifies the order of the sections in the report.
+# Sections are identified by their module name or custom content ID.
+# Any modules found by MultiQC but not listed here will be appended at the end.
+module_order:
+  - "multiqc_general_stats" # General Statistics table
+  - "fastp"                 # Fastp quality control results
+  - "vsearch_stats"         # Custom VSEARCH clustering summary
+  - "blast_metrics"         # Custom BLAST top hits metrics
+  - "genus_abundance_plot"  # Custom Genus abundance bar plot

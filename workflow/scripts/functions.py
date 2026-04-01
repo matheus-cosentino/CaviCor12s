@@ -47,8 +47,9 @@ def get_final_outputs():
   if MODULES["quality_control"]:
     # Fixes the NameError and logically collects fastp reports for the QC module.
     # Assuming fastp creates .html reports in this path.
-    final_outputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.html", out_dir=OUT_DIR, sample=SAMPLE))
-    final_outputs.extend(expand("{out_dir}/multiqc_all/{pident}_multiqc_report.html", out_dir=OUT_DIR, sample=SAMPLE, pident=BLAST_IDENTITIES))
+    final_outputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.html", out_dir=OUT_DIR, sample=SAMPLE))    
+    final_outputs.extend(expand("{out_dir}/multiqc_all/{pident}_multiqc_report.html", out_dir=OUT_DIR, pident=BLAST_IDENTITIES))
+    #final_outputs.extend(expand("{out_dir}/multiqc_all/{pident}_multiqc_report.pdf", out_dir=OUT_DIR, pident=BLAST_IDENTITIES))
   #if MODULES["rarefaction"]:
   # final_outputs.append(expand("{out_dir}/Samtools/{sample}_Brute_Abundancy.txt", out_dir=OUT_DIR, sample=SAMPLE))
 
@@ -71,9 +72,12 @@ def get_all_basta_read_outputs(wildcards):
 ############################################
 def get_multiqc_inputs(wildcards):
   inputs = []
-  
-  # 1. VSEARCH Data
-  inputs.extend(expand("{out_dir}/{sample}/Vsearch/{sample}_vsearch_mqc.tsv", 
+    # 3. Quality Data (Fastp)
+  if MODULES.get("quality_control"):
+    inputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.json", 
+                         out_dir=OUT_DIR, 
+                         sample=SAMPLE))
+    inputs.extend(expand("{out_dir}/{sample}/Vsearch/{sample}_vsearch_mqc.tsv", 
                        out_dir=OUT_DIR, 
                        sample=SAMPLE))
 
@@ -90,9 +94,5 @@ def get_multiqc_inputs(wildcards):
                          sample=SAMPLE, 
                          pident=wildcards.pident))
 
-  # 3. Quality Data (Fastp)
-  if MODULES.get("quality_control"):
-    inputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.json", 
-                         out_dir=OUT_DIR, 
-                         sample=SAMPLE))
+
   return inputs

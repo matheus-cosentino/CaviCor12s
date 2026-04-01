@@ -4,4 +4,5 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - multiqc=1.33 
+  - multiqc=1.33
+  - pandoc=3.9.0.2

@@ -22,7 +22,7 @@ rule blast_summary_mqc:
     try:
       df = pd.read_csv(input.blast_out, sep='\t', names=cols, header=None)
       total_hits = len(df)
-      avg_ident = df['pident'].mean() if total_hits > 0 else 0
+      avg_ident = df['pident'].max() if total_hits > 0 else 0
       max_bit = df['bitscore'].max() if total_hits > 0 else 0
     except:
       total_hits, avg_ident, max_bit = 0, 0, 0
@@ -68,7 +68,7 @@ rule mqc_genus_abundance:
         # Write in MultiQC Custom Content format
         with open(output.mqc_file, 'w') as f:
             # MultiQC configuration headers
-            f.write("# id: 'genus_abundance_plot'\n")
+            f.write("# id: genus_abundance_plot\n")
             f.write("# section_name: 'Taxonomic Abundance (Genus)'\n")
             f.write("# plot_type: 'bargraph'\n")
             f.write("# pconfig:\n")
@@ -111,7 +111,7 @@ rule vsearch_summary_mqc:
 
         # Writing the file formatted for MultiQC
         with open(output.mqc_file, 'w') as f:
-            f.write("# id: 'vsearch_stats'\n")
+            f.write("# id: vsearch_stats\n")
             f.write("# section_name: 'VSEARCH Clustering Summary'\n")
             f.write("# plot_type: 'table'\n")
             f.write("Sample\tTotal Reads\tClusters\tSingletons\t% Singletons\n")
@@ -128,7 +128,8 @@ rule multiqc_aggregate:
   conda:
     MULTIQC
   input:
-    files = get_multiqc_inputs
+    files = get_multiqc_inputs,
+    config = "config/multiqc_config.yaml"
   output:
     report = os.path.join(OUT_DIR, "multiqc_all", "{pident}_multiqc_report.html"),
     # MultiQC appends '_data' to the filename, not the wildcard.
@@ -142,9 +143,11 @@ rule multiqc_aggregate:
     multiqc \
       --quiet \
       --export \
-      --force \
+      --force --pdf \
       --outdir $(dirname {output.report}) \
       --filename $(basename {output.report}) \
+      --config {input.config} \
       {params.extra} \
       {input.files} > {log} 2>&1 
     """
+
