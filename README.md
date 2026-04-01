@@ -124,11 +124,15 @@ snakemake --use-conda --cores <N>
 
 ### Advanced Usage
 To visualize the workflow's Directed Acyclic Graph (DAG), you can run:
-```bash
-snakemake --dag | dot -Tpng > dag.png
-```
-*(Requires `graphviz` to be installed).*
 
+```bash
+snakemake --dag | dot -Tsvg > resources/logo/dag.svg
+```
+*(Requires `graphviz` to be installed)*.
+
+This will generate an SVG file of the workflow graph.
+
+!Workflow DAG
 ## Output Structure
 All results will be located in the directory specified by `output_dir` (default: `results/`). The structure will be as follows:
 
@@ -152,4 +156,3 @@ results/
 
 ## Contributing
 This project is in active development. Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-

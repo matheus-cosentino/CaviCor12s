@@ -47,8 +47,8 @@ logo_dirs:
 blast:
   perc_identity: 
     - 70
-    - 80
-    - 90
+    #- 80
+    #- 90
     #- 95 
     #- 99
   evalue:
