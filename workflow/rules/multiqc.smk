@@ -18,12 +18,13 @@ rule blast_summary_mqc:
     mqc_file = "{out_dir}/{sample}/Blast/{sample}_{pident}_blast_summary_mqc.tsv"
   run:
     import pandas as pd
-    cols = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",  "qstart", "qend", "sstart", "send", "evalue", "bitscore"]
+    cols = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore", "staxids", "sscinames", "scomnames", "slineage"]
     try:
       df = pd.read_csv(input.blast_out, sep='\t', names=cols, header=None)
       total_hits = len(df)
-      avg_ident = df['pident'].max() if total_hits > 0 else 0
-      max_bit = df['bitscore'].max() if total_hits > 0 else 0
+      avg_ident = df['pident'].mean() if total_hits > 0 else 0
+      max_bit = df['bitscore'].mean() if total_hits > 0 else 0
+      clusters_id = len(df['qseqid'].unique())
     except:
       total_hits, avg_ident, max_bit = 0, 0, 0
     with open(output.mqc_file, 'w') as f:
@@ -31,7 +32,7 @@ rule blast_summary_mqc:
       f.write("# section_name: 'BLAST Top Hits Metrics'\n")
       f.write("# plot_type: 'table'\n")
       f.write("Sample\tTotal Hits\tAvg Identity\tMax Bitscore\n")
-      f.write(f"{wildcards.sample}\t{total_hits}\t{avg_ident:.2f}\t{max_bit}\n")
+      f.write(f"{wildcards.sample}\t{clusters_id}\t{avg_ident:.2f}\t{max_bit}\n")
 
 rule mqc_genus_abundance:
     input:

@@ -43,10 +43,11 @@ blast:
 logo_dirs: 
   - "resources/logo/"
 
-########### params
+########### params of tools search ############
+############## User change here ###############
 blast:
   perc_identity: 
-    #- 70
+    - 70
     #- 80
     - 90
     #- 95 
@@ -79,7 +80,7 @@ vsearch:
 
 fastp:
   min_quality: 
-    - 10
+    - 15
   min_length: 
     - 200
   max_length: 
