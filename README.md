@@ -89,7 +89,6 @@ Enable or disable specific parts of the analysis.
 |---|---|
 | `12s_diversity` | Set to `true` to perform BLAST and VSEARCH-based diversity analysis. |
 | `quality_control` | Set to `true` to enable read quality control with `fastp`. |
-| `rarefaction` | Set to `true` to generate rarefaction curves. |
 
 ### Tool Parameters
 Adjust the parameters for the bioinformatics tools used in the pipeline. The commented-out values in the `config.yaml` serve as examples of alternative settings.
