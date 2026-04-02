@@ -52,28 +52,6 @@ conda activate cavicor
 ```
 Snakemake will automatically create the other required environments during the first run.
 
-### 4. Download Dependencies
-**NCBI Taxonomy Database**
-The pipeline requires the NCBI taxonomy dump files for taxonomic classification.
-```bash
-# Navigate to the resources directory
-cd resources/taxonomy/taxdump/
-
-# Download the taxonomy dump files
-wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
-
----use-conda: This flag tells Snakemake to automatically activate and manage the Conda environments defined in the workflow rules.
----cores all: This allocates all available CPU cores to the pipeline. You can specify a number (e.g., --cores 8) if you want to limit resource usage.
-# Extract the files
-tar -zxvf taxdump.tar.gz
-
-cd ../../../ # Return to the project root
-```
-This will place files like `nodes.dmp` and `names.dmp` in the correct directory.
-
-**BLAST Database**
-You must provide a pre-formatted BLAST database (e.g., from NCBI or a custom one). Place the database files inside the `resources/blast/` directory.
-
 ## Configuration
 All pipeline settings are controlled via the `config/config.yaml` file.
 
