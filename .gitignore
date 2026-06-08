@@ -19,3 +19,9 @@ resources/*
 
 #log of database
 logs/*
+
+# NCBI API Key (never commit this!)
+ncbi_api_key.txt
+
+# Ignore all .fasta files in the resources/Phylo_DB directory
+resources/Phylo_DB/*.fasta  

@@ -16,23 +16,37 @@
 #################################
 configfile: "config/config.yaml"
 
+# Load necessary Python functions
 import os
 import scripts.functions as functions
 from scripts.functions import get_final_outputs
 from scripts.functions import get_multiqc_inputs
+from scripts.functions import get_ncbi_api_key
+from scripts.functions import extract_genes
 
+# Set up global variables based on the configuration file
 DATA = config["data_dir"]
 OUT_DIR = config["output_dir"]
 
 SAMPLES_OBJ = glob_wildcards(os.path.join(DATA, "{sample}.fastq.gz"))
 SAMPLE = SAMPLES_OBJ.sample
-
-# Check if samples were found (good for debugging)
+# Check if samples were found (helpful for debugging)
 if not SAMPLE:
     print(f"WARNING: No samples found in {DATA} with extension .fastq.gz")
 
+
+# Support one or more LCA ranks from config
+LCA_RANKS = config.get("taxonkit", {}).get("lca_ranks")
+if LCA_RANKS is None:
+    LCA_RANKS = config.get("taxonkit", {}).get("lca_rank", ["genus"])
+if isinstance(LCA_RANKS, str):
+    LCA_RANKS = [LCA_RANKS]
+LCA_RANKS = [r.lower() for r in LCA_RANKS]
+wildcard_constraints:
+    rank = "|".join(LCA_RANKS)
+
 ############################################
-# --- 5. Export functions to be used.  --- #
+# --- 2. Export functions to be used --- #
 ###########################################
 functions.DATA = DATA
 functions.SAMPLE = SAMPLE
@@ -40,18 +54,24 @@ functions.OUT_DIR = OUT_DIR
 functions.get_final_outputs = get_final_outputs
 functions.MODULES = config["modules"]
 functions.BLAST_IDENTITIES = config["blast"]["perc_identity"]
+functions.PHYLO_TARGET = config["phylo_target"]
+functions.GENE = config.get("phylo_genes", [])
+functions.LCA_RANKS = config.get("taxonkit", {}).get("lca_ranks")
+if functions.LCA_RANKS is None:
+    functions.LCA_RANKS = config.get("taxonkit", {}).get("lca_rank", ["genus"])
+if isinstance(functions.LCA_RANKS, str):
+    functions.LCA_RANKS = [functions.LCA_RANKS]
+functions.LCA_RANKS = [r.lower() for r in functions.LCA_RANKS]
 functions.get_multiqc_inputs = get_multiqc_inputs
-
-
-#######################################################
-# --- 3. Define workflow directory and Variables --- #
-#######################################################
-SAMPLES = glob_wildcards(DATA, "{sample}.fastq.gz")
-
+functions.extract_genes = extract_genes
 
 ##############################################
-# --- 2. Define Conda Environment Paths --- #
+# --- 3. Define Conda environment paths --- #
 #############################################  
+# making names more concise for easier use in rules
+conda_prefix = ".snakemake/conda_envs"
+
+# conda environment paths
 BLAST = config["envs"]["blast"]
 CAVICOR = config["envs"]["cavicor"]
 FASTP = config["envs"]["fastp"]
@@ -61,18 +81,23 @@ SAMTOOLS = config["envs"]["samtools"]
 VSEARCH = config["envs"]["vsearch"]
 TAXONKIT = config["envs"]["taxonkit"]
 MULTIQC = config["envs"]["multiqc"]
+NCBI_DOWNLOAD = config["envs"]["ncbi_download"]
+MAFFT = config["envs"]["mafft"]
+FASTTREE = config["envs"]["fasttree"]
 
 
 #######################################
-# --- 6. Load the Workflow Rules --- #
+# --- 4. Load the workflow rules --- #
 ######################################
 include: "rules/blast.smk"
 include: "rules/fastp.smk"
 include: "rules/vsearch.smk"
 include: "rules/multiqc.smk"
+include: "rules/db_phylo.smk"
+include: "rules/phylo.smk"
 
 ######################################
-# --- 7. Obtain the final target --- #
+# --- 5. Obtain the final target --- #
 #####################################
 rule all:
   input:

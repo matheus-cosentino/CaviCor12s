@@ -34,54 +34,61 @@ rule blast_summary_mqc:
       f.write("Sample\tTotal Hits\tAvg Identity\tMax Bitscore\n")
       f.write(f"{wildcards.sample}\t{clusters_id}\t{avg_ident:.2f}\t{max_bit}\n")
 
-rule mqc_genus_abundance:
+rule mqc_lca_abundance:
     input:
         lca_out = "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt"
     output:
-        mqc_file = "{out_dir}/{sample}/LCA/{sample}_{pident}_genus_mqc.tsv"
+        mqc_file = "{out_dir}/{sample}/LCA/{sample}_{pident}_{rank}_mqc.tsv"
     run:
+        import os
         from collections import defaultdict
         import re
-        
-        genus_counts = defaultdict(int)
+
+        rank_map = {"phylum": 0, "class": 1, "order": 2, "family": 3, "genus": 4, "species": 5}
+        rank_label = wildcards.rank.title()
+        rank_index = rank_map.get(wildcards.rank, 4)
+
+        taxon_counts = defaultdict(int)
         processed_ids = set()
 
         with open(input.lca_out, 'r') as f:
             for line in f:
                 parts = line.strip().split('\t')
-                if len(parts) < 2: continue
-                
+                if len(parts) < 2:
+                    continue
+
                 query_id = parts[0]
-                if query_id in processed_ids: continue
+                if query_id in processed_ids:
+                    continue
                 processed_ids.add(query_id)
 
-                # Extracts cluster abundance (size=N) 
                 size_match = re.search(r"size=(\d+)", query_id)
                 count = int(size_match.group(1)) if size_match else 1
-                
-                # Extracts Genus (5th level of the lineage) 
+
                 lineage = parts[-1]
                 taxa = [t for t in lineage.split(';') if t]
-                genus = taxa[4] if len(taxa) >= 5 else (taxa[-1] if taxa else "Unclassified")
-                
-                genus_counts[genus] += count
+                if len(taxa) > rank_index and taxa[rank_index]:
+                    taxon = taxa[rank_index]
+                elif taxa:
+                    taxon = taxa[-1]
+                else:
+                    taxon = "Unclassified"
 
-        # Write in MultiQC Custom Content format
+                taxon_counts[taxon] += count
+
+        os.makedirs(os.path.dirname(output.mqc_file), exist_ok=True)
+
         with open(output.mqc_file, 'w') as f:
-            # MultiQC configuration headers
-            f.write("# id: genus_abundance_plot\n")
-            f.write("# section_name: 'Taxonomic Abundance (Genus)'\n")
+            f.write(f"# id: {wildcards.rank}_abundance_plot\n")
+            f.write(f"# section_name: 'Taxonomic Abundance ({rank_label})'\n")
             f.write("# plot_type: 'bargraph'\n")
             f.write("# pconfig:\n")
-            f.write("#    title: 'Reads per Genus'\n")
+            f.write(f"#    title: 'Reads per {rank_label}'\n")
             f.write("#    ylab: 'Number of Reads'\n")
-            
-            # Table header (Sample + Found Genera)
-            genera = sorted(genus_counts.keys())
-            f.write("Sample\t" + "\t".join(genera) + "\n")
-            
-            # Sample data
-            counts_str = "\t".join(str(genus_counts[g]) for g in genera)
+
+            taxa = sorted(taxon_counts.keys())
+            f.write("Sample\t" + "\t".join(taxa) + "\n")
+            counts_str = "\t".join(str(taxon_counts[t]) for t in taxa)
             f.write(f"{wildcards.sample}\t{counts_str}\n")
 
 rule vsearch_summary_mqc:
@@ -120,16 +127,54 @@ rule vsearch_summary_mqc:
 
 
 
+rule references_section:
+    message:
+        """
+        > Generate References Section for MultiQC Report
+        > Input >> resources/references.txt
+        > Output >> {output}
+        """
+    input:
+        refs = "resources/references.txt"
+    output:
+        mqc_file = os.path.join(OUT_DIR, "multiqc_all", "references_mqc.html")
+    run:
+        os.makedirs(os.path.dirname(output.mqc_file), exist_ok=True)
+        
+        with open(input.refs, 'r') as f:
+            ref_text = f.read()
+        
+        html_content = f"""<!-- id: references_section -->
+<!-- section_name: 'References' -->
+<!-- plot_type: 'html' -->
+<div class="well">
+    <h3>Pipeline References</h3>
+    <p>This analysis pipeline incorporates the following tools and methodologies:</p>
+    <ul style="line-height: 1.8;">
+"""
+        
+        for line in ref_text.strip().split('\n'):
+            if line.strip():
+                html_content += f"        <li><small>{line}</small></li>\n"
+        
+        html_content += """    </ul>
+</div>
+"""
+        
+        with open(output.mqc_file, 'w') as f:
+            f.write(html_content)
+
 rule multiqc_aggregate:
   message:
     """
-    > Generate a multiqc report in HTML format for all samples
+    > Generate MultiQC HTML report for all samples
     > Input: {input.files}
     """ 
   conda:
     MULTIQC
   input:
     files = get_multiqc_inputs,
+    refs = os.path.join(OUT_DIR, "multiqc_all", "references_mqc.html"),
     config = "config/multiqc_config.yaml"
   output:
     report = os.path.join(OUT_DIR, "multiqc_all", "{pident}_multiqc_report.html"),
@@ -149,6 +194,6 @@ rule multiqc_aggregate:
       --filename $(basename {output.report}) \
       --config {input.config} \
       {params.extra} \
-      {input.files} > {log} 2>&1 
+      {input.files} {input.refs} > {log} 2>&1 
     """
 

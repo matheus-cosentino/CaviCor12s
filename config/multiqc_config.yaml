@@ -8,4 +8,10 @@ module_order:
   - "fastp"                 # Fastp quality control results
   - "vsearch_stats"         # Custom VSEARCH clustering summary
   - "blast_metrics"         # Custom BLAST top hits metrics
+  - "order_abundance_plot"  # Custom Order abundance bar plot
+  - "family_abundance_plot" # Custom Family abundance bar plot
   - "genus_abundance_plot"  # Custom Genus abundance bar plot
+  - "species_abundance_plot" # Custom Species abundance bar plot
+  - "class_abundance_plot"  # Custom Class abundance bar plot
+  - "phylum_abundance_plot" # Custom Phylum abundance bar plot
+  - "references_section"    # References and citations

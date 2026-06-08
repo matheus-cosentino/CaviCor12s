@@ -28,12 +28,15 @@ envs:
   r_rarefaction: "../envs/r_rarefaction.yaml"
   taxonkit: "../envs/taxonkit.yaml"
   multiqc: "../envs/multiqc.yaml"
+  ncbi_download: "../envs/ncbi_download.yaml"
+  mafft: "../envs/mafft.yaml"
+  fasttree: "../envs/fasttree.yaml"
 
 ### Analysis Modules
 modules:
-  12s_diversity: true # BLAST and Basta diversity of samples
+  12s_diversity: true # BLAST diversity of samples
   quality_control: true # Data quality control
-  rarefaction: false # Data rarefaction curve
+  phylogeny: true # Phylogenetic analysis of samples
 
 ### resources
 # Diamond DB to download
@@ -44,10 +47,16 @@ logo_dirs:
   - "resources/logo/"
 
 ########### params of tools search ############
+
+###############################################
 ############## User change here ###############
+###############################################
+
+########### BLAST ############
+#Homology Search with blast
 blast:
   perc_identity: 
-    - 70
+    #- 70
     #- 80
     - 90
     #- 95 
@@ -68,7 +77,8 @@ blast:
 #    - 30
 #    - 50
  
-
+########### VSEARCH ############
+#Removing redundancy within reads, keeping only representantives by identity treshold
 vsearch:
   identity:
     #- 0.99
@@ -78,10 +88,34 @@ vsearch:
     #- 0.8
     #- 0.7
 
+########### FASTP ############
+# Quality filtering of ONP data
 fastp:
   min_quality: 
-    - 15
+    - 10
   min_length: 
     - 200
   max_length: 
     - 600
+
+########### PHYLO ############
+# Further exploring diversity by phyllogenetic group, just add TaxID of group of interest
+phylo_target:
+  - 40674 #mammals
+  #- 7742 #vertebrata
+  #- 33090 #plants
+
+# Mitocondrial Genes to build phylogenetic trees Databases within Fastas
+phylo_genes:
+  - "12s" #12s_Human
+  #- "MTCYB" #MTCYB_Human
+
+########### TAXONOMIC LEVEL ############
+taxonkit:
+  lca_rank: 
+  #- "phylum" 
+  - "class"  
+  #- "order"  
+  #- "family" 
+  #- "genus"  
+  #- "species"  

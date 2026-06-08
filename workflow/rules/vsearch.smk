@@ -14,7 +14,7 @@
 rule vsearch:
   message:
     """
-    > VSearch >> Clustering Amplicon Reads <<
+    > VSEARCH >> Cluster Amplicon Reads <<
     > Input >> {input.chopper} <<
     > Output >> {output} <<
     """

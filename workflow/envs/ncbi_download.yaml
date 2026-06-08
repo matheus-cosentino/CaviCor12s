@@ -1,0 +1,11 @@
+name: ncbi_download
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - entrez-direct 
+  - curl
+  - openssl
+  - ca-certificates
+  - perl-lwp-protocol-https

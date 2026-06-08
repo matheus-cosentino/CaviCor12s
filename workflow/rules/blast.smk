@@ -15,7 +15,7 @@
 rule get_mito_db:
   message:
     """
-    > Blast >> Get Mito Blast DataBase <<
+    > BLAST >> Download Mitochondrial BLAST Database <<
     > Output >> {output} <<
     """
   output:
@@ -31,14 +31,13 @@ rule get_mito_db:
     wget "https://ftp.ncbi.nlm.nih.gov/blast/db/mito.tar.gz" -O {output}/mito.tar.gz >> {log} 2>&1
     echo "Extracting Files..." >> {log}
     tar -xzvf {output}/mito.tar.gz -C {output} >> {log} 2>&1
-    rm {output}/mito.tar.gz
     echo "Done!" >> {log}
     """
 
 rule blast_mito:
   message:
     """
-    > Blastn >> Mito Blastn <<
+    > BLASTn >> Mitochondrial BLASTn <<
     > Input >> {input.query} <<
     > Output >> {output} <<
     > Identity >> {wildcards.pident} <<
@@ -66,7 +65,7 @@ rule blast_mito:
 rule get_taxdump:
   message:
     """
-    > TamDump DB >> Get Database <<
+    > TaxDump DB >> Download Database <<
     > Output >> {output} <<
     """
   conda:
@@ -82,12 +81,14 @@ rule get_taxdump:
     mkdir -p {output}
     wget -c https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz -O {output}/taxdump.tar.gz >> {log} 2>&1
     tar -zxvf {output}/taxdump.tar.gz -C {output} >> {log} 2>&1
+    rm {output}/taxdump.tar.gz
     """
+
 
 rule get_lineages:
   message:
     """
-    > LCA TamDump >> LCA Algo <<
+    > LCA TaxDump >> LCA Algorithm <<
     > Input >> {input.blast} & {input.db} <<
     > Output >> {output} <<
     """
@@ -103,26 +104,32 @@ rule get_lineages:
   shell:
     """
     taxonkit lca -i 13 --data-dir {input.db} {input.blast} | \
-    taxonkit reformat -i 14 --data-dir {input.db} -f "{{p}};{{c}};{{o}};{{f}};{{g}}" > {output}
-    
+    taxonkit reformat -i 14 --data-dir {input.db} -f "{{p}};{{c}};{{o}};{{f}};{{g}};{{s}}" > {output}
     """
 
 rule summarize_blast_lca:
   message:
     """
-    > LCA Summarize >> LCA Summary <<
+    > LCA Summarize >> Generate LCA Summary <<
     > Input >> {input.blast_out} <<
     > Output >> {output.abundance_table} <<
     """
   input:
     blast_out= "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt"
   output:
-    abundance_table="{out_dir}/{sample}/Abundance/{sample}_{pident}_Abundance_table.tsv"
+    abundance_table="{out_dir}/{sample}/Abundance/{sample}_{pident}_Abundance_{rank}.tsv"
   run:
+    import os
     from collections import defaultdict
     import re
-    genus_abundance = defaultdict(int)
-    centroids_processados = set()
+
+    os.makedirs(os.path.dirname(output.abundance_table), exist_ok=True)
+
+    rank_map = {"phylum": 0, "class": 1, "order": 2, "family": 3, "genus": 4, "species": 5}
+    rank_index = rank_map.get(wildcards.rank, 4)
+
+    taxon_abundance = defaultdict(int)
+    processed_centroids = set()
 
     with open(input.blast_out, 'r') as f:
         for line in f:
@@ -130,34 +137,33 @@ rule summarize_blast_lca:
             if len(parts) < 2: continue
             
             centroid_id = parts[0]
-            if centroid_id in centroids_processados:
+            if centroid_id in processed_centroids:
                 continue
             
-            centroids_processados.add(centroid_id)
+            processed_centroids.add(centroid_id)
 
-            # Extrair o 'size' (abundância de reads no cluster)
+            # Extract 'size' (abundance of reads in cluster)
             size_match = re.search(r"size=(\d+)", centroid_id)
             count = int(size_match.group(1)) if size_match else 1
             
-            # Pegar a linhagem (LCA já calculado pelo TaxonKit)
+            # Get the lineage (LCA already calculated by TaxonKit)
             lineage = parts[-1] 
-            taxa = lineage.split(';')
+            taxa = [t for t in lineage.split(';') if t]
             
-            # Extrair Gênero (ajuste o índice se necessário, aqui usamos o 5º nível)
-            if len(taxa) >= 5:
-                genus = taxa[4]
-            elif len(taxa) > 0 and taxa[0] != "":
-                genus = taxa[-1]
+            if len(taxa) > rank_index and taxa[rank_index]:
+                taxon = taxa[rank_index]
+            elif taxa:
+                taxon = taxa[-1]
             else:
-                genus = "Unclassified"
+                taxon = "Unclassified"
 
-            genus_abundance[genus] += count
+            taxon_abundance[taxon] += count
 
-    # Salvar a tabela final
+    # Save final table
     with open(output.abundance_table, 'w') as out:
-        out.write("Genus\tAbundance\n")
-        for genus, total in sorted(genus_abundance.items(), key=lambda x: x[1], reverse=True):
-            out.write(f"{genus}\t{total}\n")
+        out.write("Taxon\tAbundance\n")
+        for taxon, total in sorted(taxon_abundance.items(), key=lambda x: x[1], reverse=True):
+            out.write(f"{taxon}\t{total}\n")
 
 rule extract_fastas_by_lca:
     message:
@@ -170,53 +176,49 @@ rule extract_fastas_by_lca:
         lca = "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt",
         query = "{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta"
     output:
-        fasta_dir = directory("{out_dir}/{sample}/Fasta_by_Genus_{pident}/")
+        fasta_dir = directory("{out_dir}/{sample}/Fasta_by_LCA_{pident}_{rank}/")
     run:
         import os
         from Bio import SeqIO
 
-        # 1. Mapear cada ID de sequência para o táxon atribuído pelo LCA
+        rank_map = {"phylum": 0, "class": 1, "order": 2, "family": 3, "genus": 4, "species": 5}
+        rank_index = rank_map.get(wildcards.rank, 4)
+
+        # 1. Map each sequence ID to the taxon assigned by LCA
         seq_to_taxon = {}
         with open(input.lca, 'r') as f:
             for line in f:
                 parts = line.strip().split('\t')
-                if len(parts) < 2: continue
-                
-                # O ID da query é o primeiro campo [cite: 19, 20]
+                if len(parts) < 2:
+                    continue
+
                 query_id = parts[0]
-                # A linhagem formatada é o último campo (após taxonkit reformat) [cite: 21]
                 lineage = parts[-1]
-                
-                # Extração do táxon seguindo sua lógica: 
-                # Tenta o gênero (5º nível), se não houver, pega o último nível disponível [cite: 22]
                 taxa = [t for t in lineage.split(';') if t]
-                if len(taxa) >= 5:
-                    taxon = taxa[4]
+                if len(taxa) > rank_index and taxa[rank_index]:
+                    taxon = taxa[rank_index]
                 elif taxa:
                     taxon = taxa[-1]
                 else:
                     taxon = "Unclassified"
-                
-                # Sanitização simples para evitar problemas com nomes de arquivos
+
                 taxon_clean = taxon.replace(" ", "_").replace("/", "_").replace("(", "").replace(")", "")
                 seq_to_taxon[query_id] = taxon_clean
 
-        # 2. Garantir que o diretório de saída existe
+        # 2. Ensure output directory exists
         os.makedirs(output.fasta_dir, exist_ok=True)
 
-        # 3. Ler o FASTA de entrada e distribuir as sequências
-        # Usamos um dicionário para manter os arquivos abertos apenas durante a escrita
+        # 3. Read input FASTA and distribute sequences
         handles = {}
         try:
             for record in SeqIO.parse(input.query, "fasta"):
-                # O ID no arquivo LCA deve bater com o ID no FASTA [cite: 19, 25]
                 if record.id in seq_to_taxon:
                     t_name = seq_to_taxon[record.id]
                     file_path = os.path.join(output.fasta_dir, f"{t_name}.fasta")
-                    
+
                     if t_name not in handles:
                         handles[t_name] = open(file_path, "w")
-                    
+
                     SeqIO.write(record, handles[t_name], "fasta")
         finally:
             for h in handles.values():
