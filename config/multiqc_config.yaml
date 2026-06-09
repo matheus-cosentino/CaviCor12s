@@ -5,7 +5,8 @@
 # Any modules found by MultiQC but not listed here will be appended at the end.
 module_order:
   - "multiqc_general_stats" # General Statistics table
-  - "fastp"                 # Fastp quality control results
+  - "chopper_stats"         # Chopper filtering summary
+  - "nanostat"              # NanoStat QC metrics
   - "vsearch_stats"         # Custom VSEARCH clustering summary
   - "blast_metrics"         # Custom BLAST top hits metrics
   - "order_abundance_plot"  # Custom Order abundance bar plot

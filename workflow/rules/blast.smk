@@ -1,15 +1,13 @@
-############################################################################
-#                                Rule Blast                                #
-#                          MSc. Matheus Cosentino                          #
-############################################################################
-#    ______     ___   ____    ____  __    ______   ______   .______        #
-#   /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
-#  |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
-#  |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
-#  |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
-#   \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
-#                                                                          #
-############################################################################
+######################################################################
+#                             Rule Blast                             #
+#                          MSc. Matheus Cosentino                    #
+######################################################################
+#   \  |  _)   |              ___|                       |           #
+#  |\/ |   |   __|    _ \    |        _ \    __ \     _` |    _` |   #
+#  |   |   |   |     (   |   |       (   |   |   |   (   |   (   |   #
+# _|  _|  _|  \__|  \___/   \____|  \___/   _|  _|  \__,_|  \__,_|   #
+#                                                                    #
+######################################################################
 
 
 rule get_mito_db:
@@ -29,38 +27,56 @@ rule get_mito_db:
     mkdir -p {output}
     echo "Downloading DB..." > {log}
     wget "https://ftp.ncbi.nlm.nih.gov/blast/db/mito.tar.gz" -O {output}/mito.tar.gz >> {log} 2>&1
+    echo "Downloading taxdb..." >> {log}
+    wget "https://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz" -O {output}/taxdb.tar.gz >> {log} 2>&1
     echo "Extracting Files..." >> {log}
     tar -xzvf {output}/mito.tar.gz -C {output} >> {log} 2>&1
+    tar -xzvf {output}/taxdb.tar.gz -C {output} >> {log} 2>&1
     echo "Done!" >> {log}
     """
 
 rule blast_mito:
-  message:
-    """
-    > BLASTn >> Mitochondrial BLASTn <<
-    > Input >> {input.query} <<
-    > Output >> {output} <<
-    > Identity >> {wildcards.pident} <<
-    """
-  input:
-    query="{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta", 
-    db_dir="resources/blast_db/mito"
-  output:
-    "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt"
-  threads: 
-    4
-  params:
-    max_target_seqs=config["blast"]["max_target_seqs"][0],
-    evalue=config["blast"]["evalue"][0]
-  conda:
-    BLAST
-  log:
-    "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.log"
-  shell:
-    """
-    export BLASTDB=$(pwd)/{input.db_dir}
-    blastn -query {input.query} -db mito -num_threads {threads} -evalue {params.evalue} -max_target_seqs {params.max_target_seqs} -perc_identity {wildcards.pident} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids sscinames scomnames slineage" -out {output} 2>&1>> {log} 
-    """
+    message:
+        """
+        > BLASTn >> Mitochondrial BLASTn <<
+        > Input >> {input.query} <<
+        > Output >> {output} <<
+        > Identity >> {wildcards.pident} <<
+        """
+    input:
+        query="{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta", 
+        db_dir="resources/blast_db/mito"
+    output:
+        "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.txt"
+    threads: 
+        4
+    params:
+        max_target_seqs=config["blast"]["max_target_seqs"][0],
+        evalue=config["blast"]["evalue"][0],
+        qcov_hsp_perc=config["blast"].get("qcov", 70), # Exige no mínimo 80% de cobertura
+        task="megablast", # ou "blastn" se as sequências forem mais divergentes
+        word_size=28 # 28 é padrão do megablast, use 11 ou 15 para blastn padrão
+    conda:
+        BLAST
+    log:
+        "{out_dir}/{sample}/Blast/{sample}_{pident}_Blastn_12s.log"
+    shell:
+        """
+        export BLASTDB=$(pwd)/{input.db_dir}
+        
+        blastn \
+            -task {params.task} \
+            -word_size {params.word_size} \
+            -query {input.query} \
+            -db mito \
+            -num_threads {threads} \
+            -evalue {params.evalue} \
+            -max_target_seqs {params.max_target_seqs} \
+            -perc_identity {wildcards.pident} \
+            -qcov_hsp_perc {params.qcov_hsp_perc} \
+            -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids sscinames scomnames slineage" \
+            -out {output} 2>&1 >> {log}
+        """
 
 rule get_taxdump:
   message:

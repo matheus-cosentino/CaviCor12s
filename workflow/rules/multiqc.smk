@@ -1,15 +1,13 @@
-############################################################################
-#                               MultiQC Rules                              #
-#                          MSc. Matheus Cosentino                          #
-############################################################################
-#    ______     ___   ____    ____  __    ______   ______   .______        #
-#   /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
-#  |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
-#  |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
-#  |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
-#   \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
-#                                                                          #
-############################################################################
+######################################################################
+#                            MultiQC Rules                           #
+#                          MSc. Matheus Cosentino                    #
+######################################################################
+#   \  |  _)   |              ___|                       |           #
+#  |\/ |   |   __|    _ \    |        _ \    __ \     _` |    _` |   #
+#  |   |   |   |     (   |   |       (   |   |   |   (   |   (   |   #
+# _|  _|  _|  \__|  \___/   \____|  \___/   _|  _|  \__,_|  \__,_|   #
+#                                                                    #
+######################################################################
 
 rule blast_summary_mqc:
   input:
@@ -127,6 +125,43 @@ rule vsearch_summary_mqc:
 
 
 
+rule chopper_summary_mqc:
+    message:
+        """
+        > MultiQC >> Generate Chopper Summary <<
+        > Input >> {input.raw} & {input.filtered}
+        > Output >> {output.mqc_file}
+        """
+    input:
+        raw = os.path.join(DATA, "{sample}.fastq.gz"),
+        filtered = "{out_dir}/{sample}/Chopper/{sample}_filtered_fastq.gz"
+    output:
+        mqc_file = "{out_dir}/{sample}/Chopper/{sample}_chopper_mqc.tsv"
+    threads: 1
+    run:
+        import gzip
+        import os
+
+        def count_reads(fastq_path):
+            try:
+                with gzip.open(fastq_path, 'rb') as f:
+                    return sum(1 for _ in f) // 4
+            except FileNotFoundError:
+                return 0
+
+        raw_reads = count_reads(input.raw)
+        filtered_reads = count_reads(input.filtered)
+        survival_rate = (filtered_reads / raw_reads * 100) if raw_reads > 0 else 0
+
+        os.makedirs(os.path.dirname(output.mqc_file), exist_ok=True)
+
+        with open(output.mqc_file, 'w') as f:
+            f.write("# id: chopper_stats\n")
+            f.write("# section_name: 'Chopper Filtering Summary'\n")
+            f.write("# plot_type: 'table'\n")
+            f.write("Sample\tRaw Reads\tFiltered Reads\t% Retained\n")
+            f.write(f"{wildcards.sample}\t{raw_reads}\t{filtered_reads}\t{survival_rate:.2f}\n")
+
 rule references_section:
     message:
         """
@@ -181,7 +216,7 @@ rule multiqc_aggregate:
     # MultiQC appends '_data' to the filename, not the wildcard.
     data_dir = directory(os.path.join(OUT_DIR, "multiqc_all", "{pident}_multiqc_report_data"))
   params:
-    extra = "--title 'CaviCor12s Aggregate Report'"
+    extra = "--title 'MitoConda Aggregate Report'"
   log:
     os.path.join(OUT_DIR, "logs", "{pident}_multiqc_aggregate.log")
   shell:

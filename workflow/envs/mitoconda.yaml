@@ -1,4 +1,4 @@
-name: cavicor12s
+name: mitoconda
 channels:
   - conda-forge
   - bioconda

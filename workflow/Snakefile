@@ -1,15 +1,13 @@
-###########################################################################
-#                               Snakefile                                 #
-#                         MSc. Matheus Cosentino                          #
-###########################################################################
-#   ______     ___   ____    ____  __    ______   ______   .______        #
-#  /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
-# |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
-# |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
-# |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
-#  \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
-#                                                                         #
-###########################################################################
+######################################################################
+#                             Snakefile                              #
+#                          MSc. Matheus Cosentino                    #
+######################################################################
+#   \  |  _)   |              ___|                       |           #
+#  |\/ |   |   __|    _ \    |        _ \    __ \     _` |    _` |   #
+#  |   |   |   |     (   |   |       (   |   |   |   (   |   (   |   #
+# _|  _|  _|  \__|  \___/   \____|  \___/   _|  _|  \__,_|  \__,_|   #
+#                                                                    #
+######################################################################
  
 ##################################
 # --- 1. Load Configuration --- #
@@ -74,7 +72,8 @@ conda_prefix = ".snakemake/conda_envs"
 # conda environment paths
 BLAST = config["envs"]["blast"]
 CAVICOR = config["envs"]["cavicor"]
-FASTP = config["envs"]["fastp"]
+CHOPPER = config["envs"]["chopper"]
+NANOSTAT = config["envs"]["nanostat"]
 MINIMAP2 = config["envs"]["minimap2"]
 R_RAREFACTION = config["envs"]["r_rarefaction"]
 SAMTOOLS = config["envs"]["samtools"]
@@ -84,13 +83,14 @@ MULTIQC = config["envs"]["multiqc"]
 NCBI_DOWNLOAD = config["envs"]["ncbi_download"]
 MAFFT = config["envs"]["mafft"]
 FASTTREE = config["envs"]["fasttree"]
+TRIMAL = config["envs"]["trimal"]
 
 
 #######################################
 # --- 4. Load the workflow rules --- #
 ######################################
 include: "rules/blast.smk"
-include: "rules/fastp.smk"
+include: "rules/chopper.smk"
 include: "rules/vsearch.smk"
 include: "rules/multiqc.smk"
 include: "rules/db_phylo.smk"

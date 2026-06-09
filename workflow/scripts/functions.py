@@ -45,11 +45,14 @@ def get_final_outputs():
     final_outputs.extend(expand("{out_dir}/{sample}/Abundance/{sample}_{pident}_Abundance_{rank}.tsv", out_dir=OUT_DIR, pident=BLAST_IDENTITIES, sample=SAMPLE, rank=rank_list))
     final_outputs.extend(expand("{out_dir}/{sample}/Fasta_by_LCA_{pident}_{rank}/", out_dir=OUT_DIR, sample=SAMPLE, pident=BLAST_IDENTITIES, rank=rank_list))
   if MODULES.get("quality_control"):
-    final_outputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.html", out_dir=OUT_DIR, sample=SAMPLE))    
+    final_outputs.extend(expand("{out_dir}/{sample}/Chopper/{sample}_filtered_fastq.gz", out_dir=OUT_DIR, sample=SAMPLE))    
+    final_outputs.extend(expand("{out_dir}/{sample}/QC/NanoStat/{sample}_NanoStat.txt", out_dir=OUT_DIR, sample=SAMPLE))    
     final_outputs.extend(expand("{out_dir}/multiqc_all/{pident}_multiqc_report.html", out_dir=OUT_DIR, pident=BLAST_IDENTITIES))
   if MODULES.get("phylogeny"):
     final_outputs.extend(expand("{out_dir}/{sample}/Phylo/{sample}_{taxid}_{pident}_{gene}_Aligned.fasta", out_dir=OUT_DIR, sample=SAMPLE, taxid=PHYLO_TARGET, pident=BLAST_IDENTITIES, gene=GENE))
     final_outputs.extend(expand("{out_dir}/{sample}/Phylo/{sample}_{taxid}_{pident}_{gene}_aligned_tree.nwk", out_dir=OUT_DIR, sample=SAMPLE, taxid=PHYLO_TARGET, pident=BLAST_IDENTITIES, gene=GENE))
+  if MODULES.get("build_db_phylo_only"):
+    final_outputs.extend(expand("resources/blast_db/{gene}/{taxid}.fasta", taxid=PHYLO_TARGET, gene=GENE))
   return final_outputs
 
 ###################################################
@@ -67,11 +70,9 @@ def get_all_basta_read_outputs(wildcards):
 ############################################
 def get_multiqc_inputs(wildcards):
   inputs = []
-    # 3. Quality Data (Fastp)
   if MODULES.get("quality_control"):
-    inputs.extend(expand("{out_dir}/{sample}/Fastp/{sample}_filtered.json", 
-                         out_dir=OUT_DIR, 
-                         sample=SAMPLE))
+    inputs.extend(expand("{out_dir}/{sample}/Chopper/{sample}_chopper_mqc.tsv", out_dir=OUT_DIR, sample=SAMPLE))
+    inputs.extend(expand("{out_dir}/{sample}/QC/NanoStat/{sample}_NanoStat.txt", out_dir=OUT_DIR, sample=SAMPLE))
     inputs.extend(expand("{out_dir}/{sample}/Vsearch/{sample}_vsearch_mqc.tsv", 
                        out_dir=OUT_DIR, 
                        sample=SAMPLE))

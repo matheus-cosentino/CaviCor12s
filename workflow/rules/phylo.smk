@@ -1,7 +1,13 @@
-############################################################################
-#                         Phylogenetic Analysis                            #
-#                          MSc. Matheus Cosentino                          #
-############################################################################
+######################################################################
+#                            Rules Phylogeny                        #
+#                          MSc. Matheus Cosentino                    #
+######################################################################
+#   \  |  _)   |              ___|                       |           #
+#  |\/ |   |   __|    _ \    |        _ \    __ \     _` |    _` |   #
+#  |   |   |   |     (   |   |       (   |   |   |   (   |   (   |   #
+# _|  _|  _|  \__|  \___/   \____|  \___/   _|  _|  \__,_|  \__,_|   #
+#                                                                    #
+######################################################################
 
 # Wildcard constraints for phylogenetic analysis
 wildcard_constraints:
@@ -28,6 +34,21 @@ rule extract_taxid_by_lca:
         from Bio import SeqIO
 
         os.makedirs(os.path.dirname(output.taxid_fasta), exist_ok=True)
+        
+        # Get the taxon name from config using the taxid (phylo_target)
+        try:
+            taxid = int(wildcards.phylo_target)
+        except ValueError:
+            taxid = wildcards.phylo_target
+            
+        taxon_name = config.get("phylo_names", {}).get(taxid)
+        if not taxon_name:
+            taxon_name = config.get("phylo_names", {}).get(str(taxid))
+            
+        if not taxon_name:
+            with open(str(log), 'w') as f:
+                f.write(f"Error: TaxID {taxid} not found as a key in config['phylo_names'].\n")
+            raise ValueError(f"TaxID {taxid} must be mapped to a Taxon Name in config.yaml under 'phylo_names'")
 
         # Map sequence IDs to their lineages from LCA file
         seq_to_lineage = {}
@@ -40,17 +61,19 @@ rule extract_taxid_by_lca:
                 lineage = parts[-1]
                 seq_to_lineage[query_id] = lineage
 
-        # Extract sequences that have valid lineage information
+        # Extract sequences that contain the target taxon in their lineage
         extracted_count = 0
         with open(output.taxid_fasta, 'w') as out_fh:
             for record in SeqIO.parse(input.query, "fasta"):
                 if record.id in seq_to_lineage:
                     lineage = seq_to_lineage[record.id]
-                    if lineage and lineage.strip() and lineage != "Unclassified":
+                    # Check if the desired taxon name is anywhere in the lineage string
+                    if taxon_name in lineage.split(';'):
                         SeqIO.write(record, out_fh, "fasta")
                         extracted_count += 1
+                        
         with open(str(log), 'w') as f:
-            f.write(f"Extracted {extracted_count} sequences for phylo_target {wildcards.phylo_target}\n")
+            f.write(f"Extracted {extracted_count} sequences for phylo_target {taxon_name} (TaxID {taxid})\n")
 
 
 rule rename_fasta_headers:
@@ -87,11 +110,11 @@ rule aln_ref_taxid:
     message:
         """
         > Align reference database for phylo_target {wildcards.phylo_target} and gene {wildcards.gene}
-        > Input >> resources/blast_db/{wildcards.gene}_Fasta/{wildcards.phylo_target}.fasta
+        > Input >> resources/blast_db/{wildcards.gene}/{wildcards.phylo_target}.fasta
         > Output >> {output.ref_aln}
         """
     input:
-        ref_fasta = "resources/blast_db/{gene}_Fasta/{phylo_target}.fasta"
+        ref_fasta = "resources/blast_db/{gene}/{phylo_target}.fasta"
     output:
         ref_aln = "{out_dir}/Phylo/{phylo_target}_{gene}_ref_aln.fasta"
     conda:
@@ -129,8 +152,36 @@ rule addfragments_align:
         "{out_dir}/logs/mafft_addfragments_{sample}_{phylo_target}_{pident}_{gene}.log"
     shell:
         """
-        mafft --addfragments {input.fragments} --reorder --thread {threads} {input.ref_aln} > {output.aligned} 2> {log}
+        if [ -s {input.fragments} ]; then
+            mafft --addfragments {input.fragments} --reorder --thread {threads} {input.ref_aln} > {output.aligned} 2> {log}
+        else
+            cp {input.ref_aln} {output.aligned}
+            echo "Input fragments file is empty. Copied reference alignment." > {log}
+        fi
         """
+
+rule clean_alignment:
+    message:
+        """
+        > Clean alignment for sample {wildcards.sample}, phylo_target {wildcards.phylo_target} and gene {wildcards.gene}
+        > Input >> {input.aligned}
+        > Output >> {output.cleaned_alignment}
+        """
+    input:
+        aligned = "{out_dir}/{sample}/Phylo/{sample}_{phylo_target}_{pident}_{gene}_Aligned.fasta"
+    output:
+        cleaned_alignment = "{out_dir}/{sample}/Phylo/{sample}_{phylo_target}_{pident}_{gene}_Aligned_cleaned.fasta"
+    conda:
+        TRIMAL
+    threads:
+        4
+    log:
+        "{out_dir}/logs/trimal_{sample}_{phylo_target}_{pident}_{gene}.log"
+    shell:
+        """
+        trimal -in {input.aligned} -out {output.cleaned_alignment} -automated1 > {log} 2>&1
+        """
+
 
 rule build_tree_with_fasttree:
     message:
@@ -140,7 +191,7 @@ rule build_tree_with_fasttree:
         > Output >> {output.tree}
         """
     input:
-        aligned = "{out_dir}/{sample}/Phylo/{sample}_{phylo_target}_{pident}_{gene}_Aligned.fasta"
+        aligned = "{out_dir}/{sample}/Phylo/{sample}_{phylo_target}_{pident}_{gene}_Aligned_cleaned.fasta"
     output:
         tree = "{out_dir}/{sample}/Phylo/{sample}_{phylo_target}_{pident}_{gene}_aligned_tree.nwk"
     conda:
@@ -151,7 +202,7 @@ rule build_tree_with_fasttree:
         "{out_dir}/logs/fasttree_{sample}_{phylo_target}_{pident}_{gene}.log"
     shell:
         """
-        fasttree -nt < {input.aligned} > {output.tree} 2> {log}
+        fasttree -nt -gtr -gamma < {input.aligned} > {output.tree} 2> {log}
         """
 
 # Note: Generated tree files (.nwk) can be visualized using external tools like:

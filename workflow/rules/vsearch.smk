@@ -1,15 +1,13 @@
-############################################################################
-#                               Rules Vsearch.                             #
-#                          MSc. Matheus Cosentino                          #
-############################################################################
-#    ______     ___   ____    ____  __    ______   ______   .______        #
-#   /      |   /   \  \   \  /   / |  |  /      | /  __  \  |   _  \       #
-#  |  ,----'  /  ^  \  \   \/   /  |  | |  ,----'|  |  |  | |  |_)  |      #
-#  |  |      /  /_\  \  \      /   |  | |  |     |  |  |  | |      /       #
-#  |  `----./  _____  \  \    /    |  | |  `----.|  `--'  | |  |\  \----.  #
-#   \______/__/     \__\  \__/     |__|  \______| \______/  | _| `._____|  #
-#                                                                          #
-############################################################################
+######################################################################
+#                             Rules Vsearch.                         #
+#                          MSc. Matheus Cosentino                    #
+######################################################################
+#   \  |  _)   |              ___|                       |           #
+#  |\/ |   |   __|    _ \    |        _ \    __ \     _` |    _` |   #
+#  |   |   |   |     (   |   |       (   |   |   |   (   |   (   |   #
+# _|  _|  _|  \__|  \___/   \____|  \___/   _|  _|  \__,_|  \__,_|   #
+#                                                                    #
+######################################################################
 
 rule vsearch:
   message:
@@ -19,12 +17,13 @@ rule vsearch:
     > Output >> {output} <<
     """
   input:
-    chopper= "{out_dir}/{sample}/Fastp/{sample}_filtered_fastq.gz"
+    chopper= "{out_dir}/{sample}/Chopper/{sample}_filtered_fastq.gz"
   output:
     centroid= "{out_dir}/{sample}/Vsearch/{sample}_centroids.fasta",
     consenso= "{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta"
   params:
-    identity = config["vsearch"]["identity"][0]
+    identity = config["vsearch"]["identity"][0],
+    minsize = config["vsearch"]["minsize"][0]
   conda:
     VSEARCH
   threads: 
@@ -33,5 +32,10 @@ rule vsearch:
     "{out_dir}/{sample}/Vsearch/{sample}_Vsearch.log"
   shell:
     """ 
-    vsearch --cluster_fast {input.chopper} --id {params.identity} --threads {threads} --centroids {output.centroid} --consout {output.consenso} --sizeout  >> {log} 2>&1
+    vsearch --cluster_fast {input.chopper} --id {params.identity} --threads {threads} --centroids {output.centroid}.tmp --consout {output.consenso}.tmp --sizeout >> {log} 2>&1
+    vsearch --fastx_filter {output.centroid}.tmp --minsize {params.minsize} --fastaout {output.centroid}.filtered >> {log} 2>&1
+    vsearch --fastx_filter {output.consenso}.tmp --minsize {params.minsize} --fastaout {output.consenso}.filtered >> {log} 2>&1
+    vsearch --uchime_denovo {output.centroid}.filtered --nonchimeras {output.centroid} >> {log} 2>&1
+    vsearch --uchime_denovo {output.consenso}.filtered --nonchimeras {output.consenso} >> {log} 2>&1
+    rm {output.centroid}.tmp {output.consenso}.tmp {output.centroid}.filtered {output.consenso}.filtered
     """
