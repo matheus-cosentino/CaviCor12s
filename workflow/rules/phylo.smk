@@ -12,79 +12,21 @@
 # Wildcard constraints for phylogenetic analysis
 wildcard_constraints:
     phylo_target = r"\d+"  # phylo_target should be numeric (TaxID)
+import os
 
 
-rule extract_taxid_by_lca:
-    message:
-        """
-        > Extract sequences from {wildcards.sample} matching phylo_target {wildcards.phylo_target}
-        > Input >> {input.lca}, {input.query}
-        > Output >> {output.taxid_fasta}
-        """
-    input:
-        lca = "{out_dir}/{sample}/LCA/{sample}_{pident}_LCA_Lineage.txt",
-        query = "{out_dir}/{sample}/Vsearch/{sample}_consenso.fasta",
-        ref_db = "resources/blast_db/FastaTaxid/{phylo_target}.fasta"
-    output:
-        taxid_fasta = "{out_dir}/{sample}/Phylo/{sample}_{pident}_{phylo_target}_raw.fasta"
-    log:
-        "{out_dir}/logs/{sample}_{pident}_{phylo_target}_extract.log"
-    run:
-        import os
-        from Bio import SeqIO
 
-        os.makedirs(os.path.dirname(output.taxid_fasta), exist_ok=True)
-        
-        # Get the taxon name from config using the taxid (phylo_target)
-        try:
-            taxid = int(wildcards.phylo_target)
-        except ValueError:
-            taxid = wildcards.phylo_target
-            
-        taxon_name = config.get("phylo_names", {}).get(taxid)
-        if not taxon_name:
-            taxon_name = config.get("phylo_names", {}).get(str(taxid))
-            
-        if not taxon_name:
-            with open(str(log), 'w') as f:
-                f.write(f"Error: TaxID {taxid} not found as a key in config['phylo_names'].\n")
-            raise ValueError(f"TaxID {taxid} must be mapped to a Taxon Name in config.yaml under 'phylo_names'")
-
-        # Map sequence IDs to their lineages from LCA file
-        seq_to_lineage = {}
-        with open(input.lca, 'r') as f:
-            for line in f:
-                parts = line.strip().split('\t')
-                if len(parts) < 2:
-                    continue
-                query_id = parts[0]
-                lineage = parts[-1]
-                seq_to_lineage[query_id] = lineage
-
-        # Extract sequences that contain the target taxon in their lineage
-        extracted_count = 0
-        with open(output.taxid_fasta, 'w') as out_fh:
-            for record in SeqIO.parse(input.query, "fasta"):
-                if record.id in seq_to_lineage:
-                    lineage = seq_to_lineage[record.id]
-                    # Check if the desired taxon name is anywhere in the lineage string
-                    if taxon_name in lineage.split(';'):
-                        SeqIO.write(record, out_fh, "fasta")
-                        extracted_count += 1
-                        
-        with open(str(log), 'w') as f:
-            f.write(f"Extracted {extracted_count} sequences for phylo_target {taxon_name} (TaxID {taxid})\n")
 
 
 rule rename_fasta_headers:
     message:
         """
         > Rename FASTA headers with sample name
-        > Input >> {input.fasta}
+        > Input >> Fasta by LCA directory
         > Output >> {output.renamed_fasta}
         """
     input:
-        fasta = "{out_dir}/{sample}/Phylo/{sample}_{pident}_{phylo_target}_raw.fasta"
+        fasta_dir = "{out_dir}/{sample}/Fasta_by_LCA_{pident}_" + config["taxonkit"]["lca_rank"][0] + "/"
     output:
         renamed_fasta = "{out_dir}/{sample}/Phylo/{sample}_{pident}_{phylo_target}_renamed.fasta"
     run:
@@ -93,17 +35,26 @@ rule rename_fasta_headers:
         from Bio import SeqIO
 
         os.makedirs(os.path.dirname(output.renamed_fasta), exist_ok=True)
-        with open(output.renamed_fasta, 'w') as out_fh:
-            for record in SeqIO.parse(input.fasta, "fasta"):
-                base_id = record.id.split()[0]
-                
-                # Replace special characters that break Newick parsing (like semicolons from VSEARCH)
-                clean_id = re.sub(r'[;=:,()[\]]', '_', base_id)
-                
-                original_desc = record.description if record.description else base_id
-                record.id = f"{wildcards.sample}_{clean_id}"
-                record.description = f"{wildcards.sample}|{original_desc}"
-                SeqIO.write(record, out_fh, "fasta")
+        
+        target_name = config['phylo_names'][int(wildcards.phylo_target)]
+        fasta_path = os.path.join(input.fasta_dir, f"{target_name}.fasta")
+        
+        if not os.path.exists(fasta_path):
+            # Create an empty FASTA if the taxon was not found by LCA
+            with open(output.renamed_fasta, 'w') as out_fh:
+                pass
+        else:
+            with open(output.renamed_fasta, 'w') as out_fh:
+                for record in SeqIO.parse(fasta_path, "fasta"):
+                    base_id = record.id.split()[0]
+                    
+                    # Replace special characters that break Newick parsing (like semicolons from VSEARCH)
+                    clean_id = re.sub(r'[;=:,()[\]]', '_', base_id)
+                    
+                    original_desc = record.description if record.description else base_id
+                    record.id = f"{wildcards.sample}_{clean_id}"
+                    record.description = f"{wildcards.sample}|{original_desc}"
+                    SeqIO.write(record, out_fh, "fasta")
 
 
 rule aln_ref_taxid:
@@ -153,7 +104,7 @@ rule addfragments_align:
     shell:
         """
         if [ -s {input.fragments} ]; then
-            mafft --addfragments {input.fragments} --reorder --thread {threads} {input.ref_aln} > {output.aligned} 2> {log}
+            mafft --addfragments {input.fragments} --reorder --op 2.5 --keeplength --thread {threads} {input.ref_aln} > {output.aligned} 2> {log}
         else
             cp {input.ref_aln} {output.aligned}
             echo "Input fragments file is empty. Copied reference alignment." > {log}

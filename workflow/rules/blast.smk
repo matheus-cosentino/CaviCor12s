@@ -53,7 +53,7 @@ rule blast_mito:
     params:
         max_target_seqs=config["blast"]["max_target_seqs"][0],
         evalue=config["blast"]["evalue"][0],
-        qcov_hsp_perc=config["blast"].get("qcov", 70), # Exige no mínimo 80% de cobertura
+        qcov_hsp_perc=config["blast"].get("qcov", 80), # Exige no mínimo 80% de cobertura
         task="megablast", # ou "blastn" se as sequências forem mais divergentes
         word_size=28 # 28 é padrão do megablast, use 11 ou 15 para blastn padrão
     conda:

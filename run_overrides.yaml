@@ -8,9 +8,9 @@ modules:
   phylogeny: true
   build_db_phylo_only: false
 phylo_target:
-  - 40674
+  - 9397
 phylo_genes:
   - "12s"
 taxonkit:
   lca_rank:
-    - "order"
+    - "genus"

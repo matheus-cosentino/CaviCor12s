@@ -297,7 +297,7 @@ snakemake \
     --conda-prefix "$CONDA_DIR" \
     --configfile "$main_config" "$run_overrides" \
     --shadow-prefix "$SHADOW_DIR" \
-    --keep-going
+    --keep-going --rerun-incomplete
 
 echo -e "\n${green}> Snakemake: Creating DAG & Report...${nc}"
 snakemake --report "$output/mitoconda_report.html" \
