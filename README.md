@@ -64,7 +64,7 @@ All parameters are stored in `config/config.yaml`. The most common options are:
 | `data_dir`   | Folder with raw FASTQ files (default: `"data"`). |
 | `phylo_target` | TaxID(s) to target for phylogenetic analysis (e.g., `40674` for Mammalia). |
 | `phylo_names`  | Dictionary mapping TaxIDs to their Taxonomic Name (e.g., `40674: "Mammalia"`). Crucial for extracting specific taxa from LCA results! |
-| `phylo_genes`  | Genes for the phylogeny step (e.g., `12s`). |
+| `phylo_genes`  | Genes for the phylogeny step (e.g., `12s`). **Important**: You must provide a reference FASTA file named exactly `<gene>.fasta` in `resources/genes/` (e.g., `resources/genes/12s.fasta`) for the MAFFT alignment step to work as a bait/reference! |
 | `chopper.*`   | Quality‑filter thresholds for long reads. |
 | `blast.*`   | Homology search parameters (e.g., `% identity` and `qcov`). |
 
@@ -81,7 +81,8 @@ chopper:
 ## Usage
 
 ### 1️⃣ Prepare input data
-Place your raw Nanopore FASTQ files (`sample1.fastq.gz`, `sample2.fastq.gz`, …) in the directory indicated by `data_dir` (or specify an alternative with `--input`).
+1. Place your raw Nanopore FASTQ files (`sample1.fastq.gz`, `sample2.fastq.gz`, …) in the directory indicated by `data_dir` (or specify an alternative with `--input`).
+2. **Gene References**: Place your target gene reference sequences in `resources/genes/`. The filename must exactly match the gene name provided to the pipeline (e.g., if you run with `--gene 12s`, the file must be `resources/genes/12s.fasta`).
 
 ### 2️⃣ Run the pipeline (recommended)
 Use the bundled wrapper script `MitoConda.sh` to activate environments and toggle modules on‑the‑fly, overriding `config.yaml` when needed:
