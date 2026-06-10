@@ -130,8 +130,8 @@ results/
     ├── Vsearch/           # Clustering and Chimera detection outputs
     ├── LCA/               # Lowest Common Ancestor taxonomy files
     ├── Fasta_by_LCA/      # Sequences split by requested LCA rank
-    ├── Phylo/             # Cleaned alignments and FastTree trees (.nwk)
-    └── multiqc_all/       # Combined MultiQC report across all samples
+    └── Phylo/             # Cleaned alignments and FastTree trees (.nwk)
+└── multiqc_all/       # Combined MultiQC report across all samples
 ```
 
 ---
