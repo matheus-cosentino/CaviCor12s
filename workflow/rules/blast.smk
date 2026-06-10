@@ -119,8 +119,12 @@ rule get_lineages:
     1
   shell:
     """
-    taxonkit lca -i 13 --data-dir {input.db} {input.blast} | \
-    taxonkit reformat -i 14 --data-dir {input.db} -f "{{p}};{{c}};{{o}};{{f}};{{g}};{{s}}" > {output}
+    if [ -s {input.blast} ]; then
+        taxonkit lca -i 13 --data-dir {input.db} {input.blast} | \
+        taxonkit reformat -i 14 --data-dir {input.db} -f "{{p}};{{c}};{{o}};{{f}};{{g}};{{s}}" > {output}
+    else
+        touch {output}
+    fi
     """
 
 rule summarize_blast_lca:
